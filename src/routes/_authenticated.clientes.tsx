@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { gerarCobrancaInfinitepay } from "@/lib/infinitepay.functions";
@@ -19,6 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { fmtBRL, fmtDate, diasAte } from "@/lib/format";
 import { Plus, Pencil, Trash2, QrCode, X } from "lucide-react";
 import { toast } from "sonner";
+import { ChevronDown, ChevronRight } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/clientes")({
   head: () => ({ meta: [{ title: "Clientes — RenovaZap" }] }),
@@ -45,6 +46,8 @@ function Clientes() {
   const [pacoteFilter, setPacoteFilter] = useState<string>("todos");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Cliente | null>(null);
+  const [agrupar, setAgrupar] = useState(true);
+  const [expandido, setExpandido] = useState<Record<string, boolean>>({});
 
   const { data: clientes = [] } = useQuery({
     queryKey: ["clientes"],
@@ -87,6 +90,25 @@ function Clientes() {
     setPacoteFilter("todos");
   };
   const hasFilters = q !== "" || statusFilter !== "todos" || pacoteFilter !== "todos";
+
+  // Agrupa por telefone (usuários com múltiplas contas)
+  const grupos = (() => {
+    const map = new Map<string, Cliente[]>();
+    for (const c of filtered) {
+      const key = (c.telefone || c.id).trim();
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(c);
+    }
+    return Array.from(map.entries())
+      .map(([telefone, itens]) => ({
+        telefone,
+        nome: itens[0].nome,
+        itens: itens.sort((a, b) => a.expiracao.localeCompare(b.expiracao)),
+        proxVenc: itens.reduce((min, c) => c.expiracao < min ? c.expiracao : min, itens[0].expiracao),
+        totalValor: itens.reduce((s, c) => s + Number(c.valor || 0), 0),
+      }))
+      .sort((a, b) => a.proxVenc.localeCompare(b.proxVenc));
+  })();
 
   const remove = async (id: string) => {
     if (!confirm("Excluir este cliente?")) return;
@@ -181,10 +203,23 @@ function Clientes() {
         </Button>
       </div>
 
+      <div className="flex items-center gap-2 text-sm">
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" checked={agrupar} onChange={(e) => setAgrupar(e.target.checked)} />
+          Agrupar por telefone (unifica contas do mesmo usuário)
+        </label>
+        {agrupar && (
+          <span className="text-muted-foreground">
+            · {grupos.length} usuário(s), {filtered.length} conta(s)
+          </span>
+        )}
+      </div>
+
       <div className="rounded-md border bg-card">
         <Table>
           <TableHeader>
             <TableRow>
+              {agrupar && <TableHead className="w-8"></TableHead>}
               <TableHead>Nome</TableHead>
               <TableHead>Telefone</TableHead>
               <TableHead>Plano</TableHead>
@@ -196,9 +231,9 @@ function Clientes() {
           </TableHeader>
           <TableBody>
             {filtered.length === 0 && (
-              <TableRow><TableCell colSpan={7} className="text-center text-sm text-muted-foreground py-8">Nenhum cliente</TableCell></TableRow>
+              <TableRow><TableCell colSpan={agrupar ? 8 : 7} className="text-center text-sm text-muted-foreground py-8">Nenhum cliente</TableCell></TableRow>
             )}
-            {filtered.map((c) => {
+            {!agrupar && filtered.map((c) => {
               const d = diasAte(c.expiracao);
               return (
                 <TableRow key={c.id}>
@@ -221,6 +256,68 @@ function Clientes() {
                     <Button size="sm" variant="ghost" onClick={() => remove(c.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                   </TableCell>
                 </TableRow>
+              );
+            })}
+            {agrupar && grupos.map((g) => {
+              const aberto = expandido[g.telefone] ?? (g.itens.length === 1);
+              const d = diasAte(g.proxVenc);
+              return (
+                <Fragment key={g.telefone}>
+                  <TableRow className="bg-muted/30">
+                    <TableCell>
+                      {g.itens.length > 1 && (
+                        <button onClick={() => setExpandido({ ...expandido, [g.telefone]: !aberto })}>
+                          {aberto ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                        </button>
+                      )}
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {g.nome}
+                      {g.itens.length > 1 && <Badge variant="secondary" className="ml-2">{g.itens.length} contas</Badge>}
+                    </TableCell>
+                    <TableCell>{g.telefone}</TableCell>
+                    <TableCell className="text-muted-foreground">—</TableCell>
+                    <TableCell>{fmtBRL(g.totalValor)}</TableCell>
+                    <TableCell>
+                      {fmtDate(g.proxVenc)}{" "}
+                      <span className={`ml-1 text-xs ${d < 0 ? "text-destructive" : d <= 3 ? "text-orange-500" : "text-muted-foreground"}`}>
+                        ({d < 0 ? `vencido ${Math.abs(d)}d` : d === 0 ? "hoje" : `${d}d`})
+                      </span>
+                    </TableCell>
+                    <TableCell></TableCell>
+                    <TableCell></TableCell>
+                  </TableRow>
+                  {aberto && g.itens.map((c) => {
+                    const dc = diasAte(c.expiracao);
+                    const { conta, pacote } = parseObs(c.observacoes);
+                    return (
+                      <TableRow key={c.id}>
+                        <TableCell></TableCell>
+                        <TableCell className="pl-8 text-sm">
+                          {conta || pacote || c.nome}
+                          {pacote && conta && <span className="ml-1 text-xs text-muted-foreground">· {pacote}</span>}
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground">{c.telefone}</TableCell>
+                        <TableCell>{c.plano}</TableCell>
+                        <TableCell>{Number(c.valor) > 0 ? fmtBRL(c.valor) : <span className="text-xs text-muted-foreground">padrão</span>}</TableCell>
+                        <TableCell>
+                          {fmtDate(c.expiracao)}{" "}
+                          <span className={`ml-1 text-xs ${dc < 0 ? "text-destructive" : dc <= 3 ? "text-orange-500" : "text-muted-foreground"}`}>
+                            ({dc < 0 ? `vencido ${Math.abs(dc)}d` : dc === 0 ? "hoje" : `${dc}d`})
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={c.status === "ativo" ? "default" : "secondary"}>{c.status}</Badge>
+                        </TableCell>
+                        <TableCell className="text-right space-x-1">
+                          <Button size="sm" variant="ghost" onClick={() => gerarPix(c)} title="Gerar PIX"><QrCode className="h-4 w-4" /></Button>
+                          <Button size="sm" variant="ghost" onClick={() => { setEditing(c); setOpen(true); }}><Pencil className="h-4 w-4" /></Button>
+                          <Button size="sm" variant="ghost" onClick={() => remove(c.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </Fragment>
               );
             })}
           </TableBody>
@@ -281,7 +378,11 @@ function ClienteForm({ editing, onSaved }: { editing: Cliente | null; onSaved: (
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-1"><Label>Valor (R$)</Label><Input type="number" step="0.01" value={form.valor ?? 0} onChange={(e) => setForm({ ...form, valor: Number(e.target.value) })} /></div>
+          <div className="space-y-1">
+            <Label>Valor (R$)</Label>
+            <Input type="number" step="0.01" placeholder="0 = usar padrão" value={form.valor ?? 0} onChange={(e) => setForm({ ...form, valor: Number(e.target.value) })} />
+            <p className="text-xs text-muted-foreground">Deixe 0 para usar o valor padrão de Configurações.</p>
+          </div>
           <div className="space-y-1">
             <Label>Status</Label>
             <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
