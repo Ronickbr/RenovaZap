@@ -11,11 +11,11 @@ export const Route = createFileRoute("/")({
         content:
           "Reduza inadimplência e recupere receita: lembretes automáticos no WhatsApp, cobrança PIX instantânea e renovação sem intervenção manual.",
       },
-      { property: "og:title", content: "RenovaZap — Renove assinaturas no automático" },
+      { property: "og:title", content: "RenovaZap — Renovação automática via WhatsApp e PIX" },
       {
         property: "og:description",
         content:
-          "Monitoramento de vencimentos, cobrança PIX e confirmação automática direto no WhatsApp do seu cliente.",
+          "Reduza inadimplência e recupere receita: lembretes automáticos no WhatsApp, cobrança PIX instantânea e renovação sem intervenção manual.",
       },
     ],
   }),

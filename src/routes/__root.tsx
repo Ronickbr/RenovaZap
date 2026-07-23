@@ -80,11 +80,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "RenovaZap — Renovação automática via WhatsApp e PIX" },
-      { name: "description", content: "Automatize lembretes de renovação, cobranças PIX e confirmação de pagamentos direto no WhatsApp." },
+      { name: "description", content: "Reduza inadimplência e recupere receita: lembretes automáticos no WhatsApp, cobrança PIX instantânea e renovação sem intervenção manual." },
       { property: "og:title", content: "RenovaZap — Renovação automática via WhatsApp e PIX" },
-      { property: "og:description", content: "Automatize lembretes de renovação, cobranças PIX e confirmação de pagamentos direto no WhatsApp." },
+      { property: "og:description", content: "Reduza inadimplência e recupere receita: lembretes automáticos no WhatsApp, cobrança PIX instantânea e renovação sem intervenção manual." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "RenovaZap — Renovação automática via WhatsApp e PIX" },
+      { name: "twitter:description", content: "Reduza inadimplência e recupere receita: lembretes automáticos no WhatsApp, cobrança PIX instantânea e renovação sem intervenção manual." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/7d7e4dd5-367c-4095-b18f-c01a76d76c58/id-preview-1bee4c08--f10dcb0c-3af0-43a1-824a-5a69b17576ac.lovable.app-1784830408496.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/7d7e4dd5-367c-4095-b18f-c01a76d76c58/id-preview-1bee4c08--f10dcb0c-3af0-43a1-824a-5a69b17576ac.lovable.app-1784830408496.png" },
     ],
     links: [
       {
