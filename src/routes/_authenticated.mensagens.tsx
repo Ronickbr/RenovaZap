@@ -17,7 +17,7 @@ function Mensagens() {
       const { data, error } = await supabase
         .from("mensagens")
         .select("*, clientes(nome, telefone)")
-        .order("created_at", { ascending: false })
+        .order("enviado_em", { ascending: false })
         .limit(200);
       if (error) throw error;
       return data as any[];
@@ -56,7 +56,7 @@ function Mensagens() {
                 </TableCell>
                 <TableCell><Badge variant="outline">{m.tipo}</Badge></TableCell>
                 <TableCell className="max-w-md truncate text-sm">{m.conteudo}</TableCell>
-                <TableCell className="text-sm">{fmtDateTime(m.created_at)}</TableCell>
+                <TableCell className="text-sm">{fmtDateTime(m.enviado_em)}</TableCell>
                 <TableCell><Badge variant={variant(m.status)}>{m.status}</Badge></TableCell>
               </TableRow>
             ))}
