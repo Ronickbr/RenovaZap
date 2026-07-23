@@ -18,6 +18,7 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated.configuracoes'
 import { Route as AuthenticatedCobrancasRouteImport } from './routes/_authenticated.cobrancas'
 import { Route as AuthenticatedClientesRouteImport } from './routes/_authenticated.clientes'
+import { Route as ApiPublicWebhookWhatsappRouteImport } from './routes/api/public/webhook-whatsapp'
 import { Route as ApiPublicWebhookPixRouteImport } from './routes/api/public/webhook-pix'
 
 const AuthRoute = AuthRouteImport.update({
@@ -65,6 +66,12 @@ const AuthenticatedClientesRoute = AuthenticatedClientesRouteImport.update({
   path: '/clientes',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const ApiPublicWebhookWhatsappRoute =
+  ApiPublicWebhookWhatsappRouteImport.update({
+    id: '/api/public/webhook-whatsapp',
+    path: '/api/public/webhook-whatsapp',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicWebhookPixRoute = ApiPublicWebhookPixRouteImport.update({
   id: '/api/public/webhook-pix',
   path: '/api/public/webhook-pix',
@@ -81,6 +88,7 @@ export interface FileRoutesByFullPath {
   '/mensagens': typeof AuthenticatedMensagensRoute
   '/templates': typeof AuthenticatedTemplatesRoute
   '/api/public/webhook-pix': typeof ApiPublicWebhookPixRoute
+  '/api/public/webhook-whatsapp': typeof ApiPublicWebhookWhatsappRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -92,6 +100,7 @@ export interface FileRoutesByTo {
   '/mensagens': typeof AuthenticatedMensagensRoute
   '/templates': typeof AuthenticatedTemplatesRoute
   '/api/public/webhook-pix': typeof ApiPublicWebhookPixRoute
+  '/api/public/webhook-whatsapp': typeof ApiPublicWebhookWhatsappRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -105,6 +114,7 @@ export interface FileRoutesById {
   '/_authenticated/mensagens': typeof AuthenticatedMensagensRoute
   '/_authenticated/templates': typeof AuthenticatedTemplatesRoute
   '/api/public/webhook-pix': typeof ApiPublicWebhookPixRoute
+  '/api/public/webhook-whatsapp': typeof ApiPublicWebhookWhatsappRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -118,6 +128,7 @@ export interface FileRouteTypes {
     | '/mensagens'
     | '/templates'
     | '/api/public/webhook-pix'
+    | '/api/public/webhook-whatsapp'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -129,6 +140,7 @@ export interface FileRouteTypes {
     | '/mensagens'
     | '/templates'
     | '/api/public/webhook-pix'
+    | '/api/public/webhook-whatsapp'
   id:
     | '__root__'
     | '/'
@@ -141,6 +153,7 @@ export interface FileRouteTypes {
     | '/_authenticated/mensagens'
     | '/_authenticated/templates'
     | '/api/public/webhook-pix'
+    | '/api/public/webhook-whatsapp'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -148,6 +161,7 @@ export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   AuthRoute: typeof AuthRoute
   ApiPublicWebhookPixRoute: typeof ApiPublicWebhookPixRoute
+  ApiPublicWebhookWhatsappRoute: typeof ApiPublicWebhookWhatsappRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -215,6 +229,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedClientesRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/api/public/webhook-whatsapp': {
+      id: '/api/public/webhook-whatsapp'
+      path: '/api/public/webhook-whatsapp'
+      fullPath: '/api/public/webhook-whatsapp'
+      preLoaderRoute: typeof ApiPublicWebhookWhatsappRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/webhook-pix': {
       id: '/api/public/webhook-pix'
       path: '/api/public/webhook-pix'
@@ -252,6 +273,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   AuthRoute: AuthRoute,
   ApiPublicWebhookPixRoute: ApiPublicWebhookPixRoute,
+  ApiPublicWebhookWhatsappRoute: ApiPublicWebhookWhatsappRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
