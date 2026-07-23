@@ -15,7 +15,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { fmtBRL, fmtDate, diasAte } from "@/lib/format";
-import { Plus, Pencil, Trash2, QrCode } from "lucide-react";
+import { Plus, Pencil, Trash2, QrCode, X } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/clientes")({
@@ -38,6 +38,8 @@ type Cliente = {
 function Clientes() {
   const qc = useQueryClient();
   const [q, setQ] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("todos");
+  const [pacoteFilter, setPacoteFilter] = useState<string>("todos");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Cliente | null>(null);
 
@@ -50,12 +52,38 @@ function Clientes() {
     },
   });
 
-  const filtered = clientes.filter(
-    (c) =>
-      c.nome.toLowerCase().includes(q.toLowerCase()) ||
-      c.telefone.includes(q) ||
-      (c.email ?? "").toLowerCase().includes(q.toLowerCase()),
-  );
+  // Extrai "Conta:" e "Pacote:" das observações (formato importado da planilha)
+  const parseObs = (obs: string | null) => {
+    const conta = obs?.match(/Conta:\s*([^\|]+)/i)?.[1]?.trim() ?? "";
+    const pacote = obs?.match(/Pacote:\s*([^\|]+)/i)?.[1]?.trim() ?? "";
+    return { conta, pacote };
+  };
+
+  const pacotes = Array.from(
+    new Set(clientes.map((c) => parseObs(c.observacoes).pacote).filter(Boolean)),
+  ).sort();
+
+  const query = q.trim().toLowerCase();
+  const filtered = clientes.filter((c) => {
+    const { conta, pacote } = parseObs(c.observacoes);
+    const matchQ =
+      !query ||
+      c.nome.toLowerCase().includes(query) ||
+      c.telefone.toLowerCase().includes(query) ||
+      (c.email ?? "").toLowerCase().includes(query) ||
+      conta.toLowerCase().includes(query) ||
+      pacote.toLowerCase().includes(query);
+    const matchStatus = statusFilter === "todos" || c.status === statusFilter;
+    const matchPacote = pacoteFilter === "todos" || pacote === pacoteFilter;
+    return matchQ && matchStatus && matchPacote;
+  });
+
+  const clearFilters = () => {
+    setQ("");
+    setStatusFilter("todos");
+    setPacoteFilter("todos");
+  };
+  const hasFilters = q !== "" || statusFilter !== "todos" || pacoteFilter !== "todos";
 
   const remove = async (id: string) => {
     if (!confirm("Excluir este cliente?")) return;
@@ -87,7 +115,9 @@ function Clientes() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Clientes</h1>
-          <p className="text-sm text-muted-foreground">{clientes.length} cadastrado(s)</p>
+          <p className="text-sm text-muted-foreground">
+            {filtered.length} de {clientes.length} cadastrado(s)
+          </p>
         </div>
         <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setEditing(null); }}>
           <DialogTrigger asChild>
@@ -100,7 +130,34 @@ function Clientes() {
         </Dialog>
       </div>
 
-      <Input placeholder="Buscar por nome, telefone ou e-mail…" value={q} onChange={(e) => setQ(e.target.value)} />
+      <div className="grid gap-2 md:grid-cols-[1fr_180px_180px_auto]">
+        <Input
+          placeholder="Buscar por nome, conta, telefone, e-mail ou pacote…"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+        />
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="todos">Todos os status</SelectItem>
+            <SelectItem value="ativo">Ativo</SelectItem>
+            <SelectItem value="inativo">Inativo</SelectItem>
+            <SelectItem value="vencido">Vencido</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={pacoteFilter} onValueChange={setPacoteFilter}>
+          <SelectTrigger><SelectValue placeholder="Pacote" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="todos">Todos os pacotes</SelectItem>
+            {pacotes.map((p) => (
+              <SelectItem key={p} value={p}>{p}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Button variant="ghost" onClick={clearFilters} disabled={!hasFilters}>
+          <X className="mr-1 h-4 w-4" /> Limpar
+        </Button>
+      </div>
 
       <div className="rounded-md border bg-card">
         <Table>
