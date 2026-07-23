@@ -262,8 +262,8 @@ function Clientes() {
               const aberto = expandido[g.telefone] ?? (g.itens.length === 1);
               const d = diasAte(g.proxVenc);
               return (
-                <>
-                  <TableRow key={g.telefone} className="bg-muted/30">
+                <React.Fragment key={g.telefone}>
+                  <TableRow className="bg-muted/30">
                     <TableCell>
                       {g.itens.length > 1 && (
                         <button onClick={() => setExpandido({ ...expandido, [g.telefone]: !aberto })}>
@@ -317,7 +317,7 @@ function Clientes() {
                       </TableRow>
                     );
                   })}
-                </>
+                </React.Fragment>
               );
             })}
           </TableBody>
