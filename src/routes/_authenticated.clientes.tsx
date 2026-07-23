@@ -262,7 +262,7 @@ function Clientes() {
               const aberto = expandido[g.telefone] ?? (g.itens.length === 1);
               const d = diasAte(g.proxVenc);
               return (
-                <React.Fragment key={g.telefone}>
+                <Fragment key={g.telefone}>
                   <TableRow className="bg-muted/30">
                     <TableCell>
                       {g.itens.length > 1 && (
@@ -317,7 +317,7 @@ function Clientes() {
                       </TableRow>
                     );
                   })}
-                </React.Fragment>
+                </Fragment>
               );
             })}
           </TableBody>
