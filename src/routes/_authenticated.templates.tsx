@@ -22,8 +22,8 @@ export const Route = createFileRoute("/_authenticated/templates")({
 type Template = {
   id: string;
   nome: string;
-  tipo: string;
-  conteudo: string;
+  gatilho: string;
+  mensagem: string;
   ativo: boolean;
 };
 
@@ -44,7 +44,7 @@ function Templates() {
   const { data = [] } = useQuery({
     queryKey: ["templates"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("templates").select("*").order("tipo");
+      const { data, error } = await supabase.from("templates").select("*").order("gatilho");
       if (error) throw error;
       return data as Template[];
     },
@@ -84,7 +84,7 @@ function Templates() {
             <CardHeader className="flex flex-row items-start justify-between space-y-0">
               <div>
                 <CardTitle className="text-base">{t.nome}</CardTitle>
-                <Badge variant="outline" className="mt-1">{TIPOS.find(x => x.v === t.tipo)?.l ?? t.tipo}</Badge>
+                <Badge variant="outline" className="mt-1">{TIPOS.find(x => x.v === t.gatilho)?.l ?? t.gatilho}</Badge>
               </div>
               <div className="flex items-center gap-2">
                 <Switch checked={t.ativo} onCheckedChange={() => toggle(t)} />
@@ -93,7 +93,7 @@ function Templates() {
               </div>
             </CardHeader>
             <CardContent>
-              <pre className="whitespace-pre-wrap text-sm text-muted-foreground">{t.conteudo}</pre>
+              <pre className="whitespace-pre-wrap text-sm text-muted-foreground">{t.mensagem}</pre>
             </CardContent>
           </Card>
         ))}
@@ -105,14 +105,14 @@ function Templates() {
 
 function TemplateForm({ editing, onSaved }: { editing: Template | null; onSaved: () => void }) {
   const [form, setForm] = useState<Partial<Template>>(
-    editing ?? { nome: "", tipo: "aviso_3d", conteudo: "Olá {{nome}}, sua assinatura vence em {{dias}} dias.", ativo: true },
+    editing ?? { nome: "", gatilho: "aviso_3d", mensagem: "Olá {{nome}}, sua assinatura vence em {{dias}} dias.", ativo: true },
   );
   const [busy, setBusy] = useState(false);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true);
-    const payload = { nome: form.nome!, tipo: form.tipo!, conteudo: form.conteudo!, ativo: !!form.ativo };
+    const payload = { nome: form.nome!, gatilho: form.gatilho!, mensagem: form.mensagem!, ativo: !!form.ativo };
     const { error } = editing
       ? await supabase.from("templates").update(payload).eq("id", editing.id)
       : await supabase.from("templates").insert(payload);
@@ -129,14 +129,14 @@ function TemplateForm({ editing, onSaved }: { editing: Template | null; onSaved:
         <div className="space-y-1"><Label>Nome</Label><Input required value={form.nome ?? ""} onChange={(e) => setForm({ ...form, nome: e.target.value })} /></div>
         <div className="space-y-1">
           <Label>Tipo</Label>
-          <Select value={form.tipo} onValueChange={(v) => setForm({ ...form, tipo: v })}>
+          <Select value={form.gatilho} onValueChange={(v) => setForm({ ...form, gatilho: v })}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
               {TIPOS.map((t) => <SelectItem key={t.v} value={t.v}>{t.l}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
-        <div className="space-y-1"><Label>Conteúdo</Label><Textarea rows={6} required value={form.conteudo ?? ""} onChange={(e) => setForm({ ...form, conteudo: e.target.value })} /></div>
+        <div className="space-y-1"><Label>Conteúdo</Label><Textarea rows={6} required value={form.mensagem ?? ""} onChange={(e) => setForm({ ...form, mensagem: e.target.value })} /></div>
         <div className="flex items-center gap-2"><Switch checked={!!form.ativo} onCheckedChange={(v) => setForm({ ...form, ativo: v })} /><Label>Ativo</Label></div>
         <DialogFooter><Button type="submit" disabled={busy}>{busy ? "Salvando…" : "Salvar"}</Button></DialogFooter>
       </form>
