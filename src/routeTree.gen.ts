@@ -15,6 +15,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedTemplatesRouteImport } from './routes/_authenticated.templates'
 import { Route as AuthenticatedMensagensRouteImport } from './routes/_authenticated.mensagens'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated.dashboard'
+import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated.configuracoes'
 import { Route as AuthenticatedCobrancasRouteImport } from './routes/_authenticated.cobrancas'
 import { Route as AuthenticatedClientesRouteImport } from './routes/_authenticated.clientes'
 
@@ -47,6 +48,12 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedConfiguracoesRoute =
+  AuthenticatedConfiguracoesRouteImport.update({
+    id: '/configuracoes',
+    path: '/configuracoes',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedCobrancasRoute = AuthenticatedCobrancasRouteImport.update({
   id: '/cobrancas',
   path: '/cobrancas',
@@ -63,6 +70,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/clientes': typeof AuthenticatedClientesRoute
   '/cobrancas': typeof AuthenticatedCobrancasRoute
+  '/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/mensagens': typeof AuthenticatedMensagensRoute
   '/templates': typeof AuthenticatedTemplatesRoute
@@ -72,6 +80,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/clientes': typeof AuthenticatedClientesRoute
   '/cobrancas': typeof AuthenticatedCobrancasRoute
+  '/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/mensagens': typeof AuthenticatedMensagensRoute
   '/templates': typeof AuthenticatedTemplatesRoute
@@ -83,6 +92,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/clientes': typeof AuthenticatedClientesRoute
   '/_authenticated/cobrancas': typeof AuthenticatedCobrancasRoute
+  '/_authenticated/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/mensagens': typeof AuthenticatedMensagensRoute
   '/_authenticated/templates': typeof AuthenticatedTemplatesRoute
@@ -94,6 +104,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/clientes'
     | '/cobrancas'
+    | '/configuracoes'
     | '/dashboard'
     | '/mensagens'
     | '/templates'
@@ -103,6 +114,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/clientes'
     | '/cobrancas'
+    | '/configuracoes'
     | '/dashboard'
     | '/mensagens'
     | '/templates'
@@ -113,6 +125,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/clientes'
     | '/_authenticated/cobrancas'
+    | '/_authenticated/configuracoes'
     | '/_authenticated/dashboard'
     | '/_authenticated/mensagens'
     | '/_authenticated/templates'
@@ -168,6 +181,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/configuracoes': {
+      id: '/_authenticated/configuracoes'
+      path: '/configuracoes'
+      fullPath: '/configuracoes'
+      preLoaderRoute: typeof AuthenticatedConfiguracoesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/cobrancas': {
       id: '/_authenticated/cobrancas'
       path: '/cobrancas'
@@ -188,6 +208,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteChildren {
   AuthenticatedClientesRoute: typeof AuthenticatedClientesRoute
   AuthenticatedCobrancasRoute: typeof AuthenticatedCobrancasRoute
+  AuthenticatedConfiguracoesRoute: typeof AuthenticatedConfiguracoesRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedMensagensRoute: typeof AuthenticatedMensagensRoute
   AuthenticatedTemplatesRoute: typeof AuthenticatedTemplatesRoute
@@ -196,6 +217,7 @@ interface AuthenticatedRouteChildren {
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedClientesRoute: AuthenticatedClientesRoute,
   AuthenticatedCobrancasRoute: AuthenticatedCobrancasRoute,
+  AuthenticatedConfiguracoesRoute: AuthenticatedConfiguracoesRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedMensagensRoute: AuthenticatedMensagensRoute,
   AuthenticatedTemplatesRoute: AuthenticatedTemplatesRoute,
