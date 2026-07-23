@@ -20,6 +20,7 @@ import { Route as AuthenticatedCobrancasRouteImport } from './routes/_authentica
 import { Route as AuthenticatedClientesRouteImport } from './routes/_authenticated.clientes'
 import { Route as ApiPublicWebhookWhatsappRouteImport } from './routes/api/public/webhook-whatsapp'
 import { Route as ApiPublicWebhookPixRouteImport } from './routes/api/public/webhook-pix'
+import { Route as ApiPublicCronVencimentosRouteImport } from './routes/api/public/cron-vencimentos'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -77,6 +78,12 @@ const ApiPublicWebhookPixRoute = ApiPublicWebhookPixRouteImport.update({
   path: '/api/public/webhook-pix',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicCronVencimentosRoute =
+  ApiPublicCronVencimentosRouteImport.update({
+    id: '/api/public/cron-vencimentos',
+    path: '/api/public/cron-vencimentos',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -87,6 +94,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/mensagens': typeof AuthenticatedMensagensRoute
   '/templates': typeof AuthenticatedTemplatesRoute
+  '/api/public/cron-vencimentos': typeof ApiPublicCronVencimentosRoute
   '/api/public/webhook-pix': typeof ApiPublicWebhookPixRoute
   '/api/public/webhook-whatsapp': typeof ApiPublicWebhookWhatsappRoute
 }
@@ -99,6 +107,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/mensagens': typeof AuthenticatedMensagensRoute
   '/templates': typeof AuthenticatedTemplatesRoute
+  '/api/public/cron-vencimentos': typeof ApiPublicCronVencimentosRoute
   '/api/public/webhook-pix': typeof ApiPublicWebhookPixRoute
   '/api/public/webhook-whatsapp': typeof ApiPublicWebhookWhatsappRoute
 }
@@ -113,6 +122,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/mensagens': typeof AuthenticatedMensagensRoute
   '/_authenticated/templates': typeof AuthenticatedTemplatesRoute
+  '/api/public/cron-vencimentos': typeof ApiPublicCronVencimentosRoute
   '/api/public/webhook-pix': typeof ApiPublicWebhookPixRoute
   '/api/public/webhook-whatsapp': typeof ApiPublicWebhookWhatsappRoute
 }
@@ -127,6 +137,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/mensagens'
     | '/templates'
+    | '/api/public/cron-vencimentos'
     | '/api/public/webhook-pix'
     | '/api/public/webhook-whatsapp'
   fileRoutesByTo: FileRoutesByTo
@@ -139,6 +150,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/mensagens'
     | '/templates'
+    | '/api/public/cron-vencimentos'
     | '/api/public/webhook-pix'
     | '/api/public/webhook-whatsapp'
   id:
@@ -152,6 +164,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/mensagens'
     | '/_authenticated/templates'
+    | '/api/public/cron-vencimentos'
     | '/api/public/webhook-pix'
     | '/api/public/webhook-whatsapp'
   fileRoutesById: FileRoutesById
@@ -160,6 +173,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ApiPublicCronVencimentosRoute: typeof ApiPublicCronVencimentosRoute
   ApiPublicWebhookPixRoute: typeof ApiPublicWebhookPixRoute
   ApiPublicWebhookWhatsappRoute: typeof ApiPublicWebhookWhatsappRoute
 }
@@ -243,6 +257,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicWebhookPixRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/cron-vencimentos': {
+      id: '/api/public/cron-vencimentos'
+      path: '/api/public/cron-vencimentos'
+      fullPath: '/api/public/cron-vencimentos'
+      preLoaderRoute: typeof ApiPublicCronVencimentosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -272,6 +293,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   AuthRoute: AuthRoute,
+  ApiPublicCronVencimentosRoute: ApiPublicCronVencimentosRoute,
   ApiPublicWebhookPixRoute: ApiPublicWebhookPixRoute,
   ApiPublicWebhookWhatsappRoute: ApiPublicWebhookWhatsappRoute,
 }
