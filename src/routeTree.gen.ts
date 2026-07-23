@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedTemplatesRouteImport } from './routes/_authenticated.templates'
 import { Route as AuthenticatedMensagensRouteImport } from './routes/_authenticated.mensagens'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated.dashboard'
 import { Route as AuthenticatedCobrancasRouteImport } from './routes/_authenticated.cobrancas'
@@ -30,6 +31,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedTemplatesRoute = AuthenticatedTemplatesRouteImport.update({
+  id: '/templates',
+  path: '/templates',
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedMensagensRoute = AuthenticatedMensagensRouteImport.update({
   id: '/mensagens',
@@ -59,6 +65,7 @@ export interface FileRoutesByFullPath {
   '/cobrancas': typeof AuthenticatedCobrancasRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/mensagens': typeof AuthenticatedMensagensRoute
+  '/templates': typeof AuthenticatedTemplatesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -67,6 +74,7 @@ export interface FileRoutesByTo {
   '/cobrancas': typeof AuthenticatedCobrancasRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/mensagens': typeof AuthenticatedMensagensRoute
+  '/templates': typeof AuthenticatedTemplatesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -77,6 +85,7 @@ export interface FileRoutesById {
   '/_authenticated/cobrancas': typeof AuthenticatedCobrancasRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/mensagens': typeof AuthenticatedMensagensRoute
+  '/_authenticated/templates': typeof AuthenticatedTemplatesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -87,8 +96,16 @@ export interface FileRouteTypes {
     | '/cobrancas'
     | '/dashboard'
     | '/mensagens'
+    | '/templates'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/clientes' | '/cobrancas' | '/dashboard' | '/mensagens'
+  to:
+    | '/'
+    | '/auth'
+    | '/clientes'
+    | '/cobrancas'
+    | '/dashboard'
+    | '/mensagens'
+    | '/templates'
   id:
     | '__root__'
     | '/'
@@ -98,6 +115,7 @@ export interface FileRouteTypes {
     | '/_authenticated/cobrancas'
     | '/_authenticated/dashboard'
     | '/_authenticated/mensagens'
+    | '/_authenticated/templates'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -128,6 +146,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/templates': {
+      id: '/_authenticated/templates'
+      path: '/templates'
+      fullPath: '/templates'
+      preLoaderRoute: typeof AuthenticatedTemplatesRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/mensagens': {
       id: '/_authenticated/mensagens'
@@ -165,6 +190,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedCobrancasRoute: typeof AuthenticatedCobrancasRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedMensagensRoute: typeof AuthenticatedMensagensRoute
+  AuthenticatedTemplatesRoute: typeof AuthenticatedTemplatesRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -172,6 +198,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedCobrancasRoute: AuthenticatedCobrancasRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedMensagensRoute: AuthenticatedMensagensRoute,
+  AuthenticatedTemplatesRoute: AuthenticatedTemplatesRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
