@@ -22,6 +22,7 @@ type Config = {
   valor_anual: number;
   tempo_expiracao_pix: number;
   dias_aviso: number[];
+  infinitepay_handle: string | null;
 };
 
 function Configuracoes() {
@@ -49,6 +50,7 @@ function Configuracoes() {
       valor_anual: Number(form.valor_anual),
       tempo_expiracao_pix: Number(form.tempo_expiracao_pix),
       dias_aviso: form.dias_aviso,
+      infinitepay_handle: form.infinitepay_handle?.trim() || null,
     }).eq("id", form.id);
     if (error) return toast.error(error.message);
     toast.success("Configurações salvas");
@@ -72,12 +74,26 @@ function Configuracoes() {
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="simulado">Simulado (dev)</SelectItem>
+                  <SelectItem value="infinitepay">InfinitePay</SelectItem>
                   <SelectItem value="mercadopago">Mercado Pago</SelectItem>
                   <SelectItem value="efi">Efí (Gerencianet)</SelectItem>
                   <SelectItem value="asaas">Asaas</SelectItem>
                 </SelectContent>
               </Select>
             </div>
+            {form.provedor_pix === "infinitepay" && (
+              <div className="space-y-1">
+                <Label>InfiniteTag (handle)</Label>
+                <Input
+                  placeholder="sualoja (sem o $)"
+                  value={form.infinitepay_handle ?? ""}
+                  onChange={(e) => setForm({ ...form, infinitepay_handle: e.target.value })}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Seu nome de usuário no app InfinitePay. É só isso — a API pública não exige chave.
+                </p>
+              </div>
+            )}
             <div className="space-y-1">
               <Label>WhatsApp</Label>
               <Select value={form.provedor_whatsapp} onValueChange={(v) => setForm({ ...form, provedor_whatsapp: v })}>

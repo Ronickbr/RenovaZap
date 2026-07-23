@@ -2,6 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
+import { gerarCobrancaInfinitepay } from "@/lib/infinitepay.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -37,6 +39,7 @@ type Cliente = {
 
 function Clientes() {
   const qc = useQueryClient();
+  const gerarInfinitepay = useServerFn(gerarCobrancaInfinitepay);
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("todos");
   const [pacoteFilter, setPacoteFilter] = useState<string>("todos");
@@ -94,6 +97,26 @@ function Clientes() {
   };
 
   const gerarPix = async (c: Cliente) => {
+    const { data: cfg } = await supabase
+      .from("configuracoes")
+      .select("provedor_pix")
+      .eq("id", 1)
+      .maybeSingle();
+    const provedor = cfg?.provedor_pix ?? "simulado";
+
+    if (provedor === "infinitepay") {
+      try {
+        const res = await gerarInfinitepay({ data: { clienteId: c.id } });
+        toast.success("Link InfinitePay gerado");
+        qc.invalidateQueries({ queryKey: ["pagamentos"] });
+        window.open(res.url, "_blank", "noopener");
+      } catch (e: any) {
+        toast.error(e?.message ?? "Falha ao gerar cobrança InfinitePay");
+      }
+      return;
+    }
+
+    // Fallback simulado
     const txid = `PIX${Date.now()}`;
     const expires_at = new Date(Date.now() + 3600 * 1000).toISOString();
     const { error } = await supabase.from("pagamentos").insert({
@@ -102,12 +125,11 @@ function Clientes() {
       status: "pendente",
       pix_id: txid,
       txid,
-      qrcode: `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg'/>`,
       copiaecola: `00020126...${txid}...5204000053039865802BR6009RenovaZap`,
       expires_at,
     });
     if (error) return toast.error(error.message);
-    toast.success("PIX gerado (simulado). Configure seu provedor real em Configurações.");
+    toast.success("PIX simulado gerado. Selecione InfinitePay em Configurações para gerar link real.");
   };
 
   return (

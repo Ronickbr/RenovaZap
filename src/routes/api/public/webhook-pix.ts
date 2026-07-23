@@ -7,9 +7,14 @@ export const Route = createFileRoute("/api/public/webhook-pix")({
         try {
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
           const payload: any = await request.json().catch(() => ({}));
-          const txid: string | undefined = payload.txid ?? payload.pix?.[0]?.txid ?? payload.transaction_id;
+          // Aceita: InfinitePay (order_nsu / invoice_slug) e formatos genéricos (txid).
+          const txid: string | undefined =
+            payload.order_nsu ??
+            payload.txid ??
+            payload.pix?.[0]?.txid ??
+            payload.transaction_id;
           if (!txid) {
-            return new Response(JSON.stringify({ error: "missing txid" }), { status: 400, headers: { "content-type": "application/json" } });
+            return new Response(JSON.stringify({ error: "missing order_nsu/txid" }), { status: 400, headers: { "content-type": "application/json" } });
           }
 
           const { data: pag } = await supabaseAdmin
@@ -28,7 +33,18 @@ export const Route = createFileRoute("/api/public/webhook-pix")({
           base.setDate(base.getDate() + dias);
           await supabaseAdmin.from("clientes").update({ expiracao: base.toISOString().slice(0, 10), status: "ativo" }).eq("id", pag.cliente_id);
 
-          await supabaseAdmin.from("auditoria").insert({ acao: "pagamento_confirmado", entidade: "pagamento", entidade_id: pag.id, detalhes: { txid } });
+          await supabaseAdmin.from("auditoria").insert({
+            acao: "pagamento_confirmado",
+            entidade: "pagamento",
+            entidade_id: pag.id,
+            detalhes: {
+              txid,
+              invoice_slug: payload.invoice_slug,
+              transaction_nsu: payload.transaction_nsu,
+              capture_method: payload.capture_method,
+              paid_amount: payload.paid_amount,
+            },
+          });
 
           return new Response(JSON.stringify({ ok: true }), { headers: { "content-type": "application/json" } });
         } catch (e: any) {

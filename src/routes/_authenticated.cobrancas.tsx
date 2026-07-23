@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/table";
 import { fmtBRL, fmtDateTime } from "@/lib/format";
 import { toast } from "sonner";
-import { CheckCircle2, XCircle } from "lucide-react";
+import { CheckCircle2, XCircle, ExternalLink } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/cobrancas")({
   head: () => ({ meta: [{ title: "Cobranças — RenovaZap" }] }),
@@ -75,6 +75,13 @@ function Cobrancas() {
                 <TableCell className="text-sm">{fmtDateTime(p.created_at)}</TableCell>
                 <TableCell><Badge variant={variant(p.status)}>{p.status}</Badge></TableCell>
                 <TableCell className="text-right space-x-1">
+                  {p.link_pagamento && (
+                    <Button size="sm" variant="ghost" asChild title="Abrir link de pagamento">
+                      <a href={p.link_pagamento} target="_blank" rel="noopener noreferrer">
+                        <ExternalLink className="h-4 w-4" />
+                      </a>
+                    </Button>
+                  )}
                   {p.status !== "pago" && (
                     <Button size="sm" variant="ghost" onClick={() => setStatus(p.id, "pago")} title="Marcar pago">
                       <CheckCircle2 className="h-4 w-4 text-green-600" />
