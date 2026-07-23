@@ -10,8 +10,10 @@ export const Route = createFileRoute("/api/public/cron-vencimentos")({
       POST: async () => {
         try {
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-          const { data: cfg } = await supabaseAdmin.from("configuracoes").select("dias_aviso").limit(1).maybeSingle();
+          const { data: cfg } = await supabaseAdmin.from("configuracoes").select("dias_aviso, valor_mensal, valor_anual").limit(1).maybeSingle();
           const diasAviso: number[] = cfg?.dias_aviso ?? [7, 3, 1];
+          const valorMensal = Number(cfg?.valor_mensal ?? 0);
+          const valorAnual = Number(cfg?.valor_anual ?? 0);
 
           const { data: templates } = await supabaseAdmin.from("templates").select("*").eq("ativo", true);
           const tplByGatilho = new Map<string, any>();
@@ -31,11 +33,20 @@ export const Route = createFileRoute("/api/public/cron-vencimentos")({
             const tpl = tplByGatilho.get(gatilho);
             if (!tpl) continue;
 
+            const obs: string = c.observacoes ?? "";
+            const conta = obs.match(/Conta:\s*([^\|]+)/i)?.[1]?.trim() ?? "";
+            const pacote = obs.match(/Pacote:\s*([^\|]+)/i)?.[1]?.trim() ?? "";
+            const valorEfetivo = Number(c.valor) > 0
+              ? Number(c.valor)
+              : (c.plano === "anual" ? valorAnual : valorMensal);
+
             const conteudo = render(tpl.mensagem, {
               nome: c.nome,
-              valor: Number(c.valor).toFixed(2),
+              valor: valorEfetivo.toFixed(2),
               expiracao: c.expiracao,
               dias: diff,
+              conta,
+              pacote,
             });
 
             await supabaseAdmin.from("mensagens").insert({
