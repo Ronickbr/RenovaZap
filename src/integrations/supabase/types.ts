@@ -90,6 +90,7 @@ export type Database = {
         Row: {
           dias_aviso: number[]
           id: number
+          infinitepay_handle: string | null
           provedor_pix: string
           provedor_whatsapp: string
           tempo_expiracao_pix: number
@@ -100,6 +101,7 @@ export type Database = {
         Insert: {
           dias_aviso?: number[]
           id?: number
+          infinitepay_handle?: string | null
           provedor_pix?: string
           provedor_whatsapp?: string
           tempo_expiracao_pix?: number
@@ -110,6 +112,7 @@ export type Database = {
         Update: {
           dias_aviso?: number[]
           id?: number
+          infinitepay_handle?: string | null
           provedor_pix?: string
           provedor_whatsapp?: string
           tempo_expiracao_pix?: number
@@ -167,6 +170,7 @@ export type Database = {
           created_at: string
           expires_at: string | null
           id: string
+          link_pagamento: string | null
           paid_at: string | null
           pix_id: string | null
           qrcode: string | null
@@ -180,6 +184,7 @@ export type Database = {
           created_at?: string
           expires_at?: string | null
           id?: string
+          link_pagamento?: string | null
           paid_at?: string | null
           pix_id?: string | null
           qrcode?: string | null
@@ -193,6 +198,7 @@ export type Database = {
           created_at?: string
           expires_at?: string | null
           id?: string
+          link_pagamento?: string | null
           paid_at?: string | null
           pix_id?: string | null
           qrcode?: string | null
