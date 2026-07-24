@@ -36,7 +36,6 @@ export const Route = createFileRoute("/api/public/cron-vencimentos")({
 
             const obs: string = c.observacoes ?? "";
             const conta = obs.match(/Conta:\s*([^\|]+)/i)?.[1]?.trim() ?? "";
-            const pacote = obs.match(/Pacote:\s*([^\|]+)/i)?.[1]?.trim() ?? "";
             const valorEfetivo = Number(c.valor) > 0
               ? Number(c.valor)
               : (c.plano === "anual" ? valorAnual : valorMensal);
@@ -47,7 +46,6 @@ export const Route = createFileRoute("/api/public/cron-vencimentos")({
               expiracao: c.expiracao,
               dias: diff,
               conta,
-              pacote,
             });
 
             await supabaseAdmin.from("mensagens").insert({
