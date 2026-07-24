@@ -27,6 +27,7 @@ export const Route = createFileRoute("/api/public/cron-vencimentos")({
             const exp = new Date(c.expiracao); exp.setHours(0, 0, 0, 0);
             const diff = Math.round((exp.getTime() - hoje.getTime()) / 86400000);
             let gatilho: string | null = null;
+            if (diff < -90) continue; // oculta clientes vencidos há mais de 90 dias
             if (diff < 0) gatilho = "vencido";
             else if (diasAviso.includes(diff)) gatilho = `aviso_${diff}d`;
             if (!gatilho) continue;
