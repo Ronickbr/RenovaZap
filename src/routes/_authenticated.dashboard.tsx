@@ -47,52 +47,67 @@ function Dashboard() {
   });
 
   const cards = [
-    { label: "Total de clientes", value: stats?.totalClientes ?? 0, icon: Users },
-    { label: "Ativos", value: stats?.ativos ?? 0, icon: CheckCircle2 },
-    { label: "Vencidos", value: stats?.vencidos ?? 0, icon: AlertTriangle },
-    { label: "PIX pendentes", value: fmtBRL(stats?.pendValor ?? 0), icon: Receipt },
-  ];
+    { label: "Total de clientes", value: stats?.totalClientes ?? 0, icon: Users, tone: "primary" },
+    { label: "Ativos", value: stats?.ativos ?? 0, icon: CheckCircle2, tone: "success" },
+    { label: "Vencidos", value: stats?.vencidos ?? 0, icon: AlertTriangle, tone: "destructive" },
+    { label: "PIX pendentes", value: fmtBRL(stats?.pendValor ?? 0), icon: Receipt, tone: "warning" },
+  ] as const;
+
+  const toneClass = {
+    primary: "bg-primary/10 text-primary",
+    success: "bg-success/10 text-success",
+    destructive: "bg-destructive/10 text-destructive",
+    warning: "bg-warning/10 text-warning",
+  } as const;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold">Dashboard</h1>
-        <p className="text-sm text-muted-foreground">Visão geral do sistema de renovações.</p>
+        <h1 className="font-display text-3xl font-bold tracking-tight">Dashboard</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Visão geral do sistema de renovações.</p>
       </div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {cards.map((c) => (
-          <Card key={c.label}>
+          <Card key={c.label} className="group relative overflow-hidden border-border/60 shadow-soft transition-all hover:-translate-y-0.5 hover:shadow-elegant">
+            <div className="absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">{c.label}</CardTitle>
-              <c.icon className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{c.label}</CardTitle>
+              <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${toneClass[c.tone]}`}>
+                <c.icon className="h-4 w-4" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{c.value}</div>
+              <div className="font-display text-3xl font-bold tracking-tight">{c.value}</div>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      <Card>
+      <Card className="border-border/60 shadow-soft">
         <CardHeader>
-          <CardTitle>Próximos vencimentos</CardTitle>
+          <CardTitle className="font-display text-xl">Próximos vencimentos</CardTitle>
         </CardHeader>
         <CardContent>
           {!proximos?.length ? (
             <p className="text-sm text-muted-foreground">Nenhum cliente próximo do vencimento.</p>
           ) : (
-            <div className="divide-y">
+            <div className="divide-y divide-border/60">
               {proximos.map((c: any) => {
                 const d = diasAte(c.expiracao);
                 return (
-                  <div key={c.id} className="flex items-center justify-between py-3">
-                    <div>
-                      <div className="font-medium">{c.nome}</div>
-                      <div className="text-xs text-muted-foreground">{c.telefone} · {c.plano}</div>
+                  <div key={c.id} className="flex items-center justify-between gap-4 py-3.5">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-primary text-xs font-semibold text-primary-foreground">
+                        {(c.nome?.[0] ?? "?").toUpperCase()}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="truncate font-medium">{c.nome}</div>
+                        <div className="truncate text-xs text-muted-foreground">{c.telefone} · {c.plano}</div>
+                      </div>
                     </div>
                     <div className="text-right text-sm">
-                      <div>{fmtDate(c.expiracao)}</div>
-                      <div className={d < 0 ? "text-destructive" : d <= 3 ? "text-orange-500" : "text-muted-foreground"}>
+                      <div className="font-medium">{fmtDate(c.expiracao)}</div>
+                      <div className={`text-xs font-medium ${d < 0 ? "text-destructive" : d <= 3 ? "text-warning" : "text-muted-foreground"}`}>
                         {d < 0 ? `vencido há ${Math.abs(d)}d` : d === 0 ? "vence hoje" : `em ${d}d`}
                       </div>
                     </div>
