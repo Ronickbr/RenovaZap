@@ -44,7 +44,6 @@ function Clientes() {
   const gerarInfinitepay = useServerFn(gerarCobrancaInfinitepay);
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("todos");
-  const [pacoteFilter, setPacoteFilter] = useState<string>("todos");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Cliente | null>(null);
   const [expandido, setExpandido] = useState<Record<string, boolean>>({});
@@ -59,22 +58,16 @@ function Clientes() {
     },
   });
 
-  // Extrai "Conta:" e "Pacote:" das observações (formato importado da planilha)
   const parseObs = (obs: string | null) => {
     const usuario =
       obs?.match(/Usuario:\s*([^\|]+)/i)?.[1]?.trim() ??
       obs?.match(/Conta:\s*([^\|]+)/i)?.[1]?.trim() ??
       "";
     const senha = obs?.match(/Senha:\s*([^\|]+)/i)?.[1]?.trim() ?? "";
-    const pacote = obs?.match(/Pacote:\s*([^\|]+)/i)?.[1]?.trim() ?? "";
     const indicacao =
       obs?.match(/Indica[cç][aã]o:\s*([^\|]+)/i)?.[1]?.trim() ?? "";
-    return { usuario, senha, pacote, indicacao, conta: usuario };
+    return { usuario, senha, indicacao, conta: usuario };
   };
-
-  const pacotes = Array.from(
-    new Set(clientes.map((c) => parseObs(c.observacoes).pacote).filter(Boolean)),
-  ).sort();
 
   const query = q.trim().toLowerCase();
   const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
@@ -89,25 +82,21 @@ function Clientes() {
         return (hoje.getTime() - exp.getTime()) / 86400000 <= 90;
       });
   const filtered = visiveis.filter((c) => {
-    const { conta, pacote } = parseObs(c.observacoes);
     const matchQ =
       !query ||
       c.nome.toLowerCase().includes(query) ||
       c.telefone.toLowerCase().includes(query) ||
       (c.email ?? "").toLowerCase().includes(query) ||
-      (parseObs(c.observacoes).usuario).toLowerCase().includes(query) ||
-      pacote.toLowerCase().includes(query);
+      (parseObs(c.observacoes).usuario).toLowerCase().includes(query);
     const matchStatus = statusFilter === "todos" || c.status === statusFilter;
-    const matchPacote = pacoteFilter === "todos" || pacote === pacoteFilter;
-    return matchQ && matchStatus && matchPacote;
+    return matchQ && matchStatus;
   });
 
   const clearFilters = () => {
     setQ("");
     setStatusFilter("todos");
-    setPacoteFilter("todos");
   };
-  const hasFilters = q !== "" || statusFilter !== "todos" || pacoteFilter !== "todos";
+  const hasFilters = q !== "" || statusFilter !== "todos";
 
   const remove = async (id: string) => {
     if (!confirm("Excluir este cliente?")) return;
@@ -173,9 +162,9 @@ function Clientes() {
         </Dialog>
       </div>
 
-      <div className="grid gap-2 md:grid-cols-[1fr_180px_180px_auto]">
+      <div className="grid gap-2 md:grid-cols-[1fr_180px_auto]">
         <Input
-          placeholder="Buscar por nome, conta, telefone, e-mail ou pacote…"
+          placeholder="Buscar por nome, usuário, telefone ou e-mail…"
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />
@@ -186,15 +175,6 @@ function Clientes() {
             <SelectItem value="ativo">Ativo</SelectItem>
             <SelectItem value="inativo">Inativo</SelectItem>
             <SelectItem value="vencido">Vencido</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={pacoteFilter} onValueChange={setPacoteFilter}>
-          <SelectTrigger><SelectValue placeholder="Pacote" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="todos">Todos os pacotes</SelectItem>
-            {pacotes.map((p) => (
-              <SelectItem key={p} value={p}>{p}</SelectItem>
-            ))}
           </SelectContent>
         </Select>
         <Button variant="ghost" onClick={clearFilters} disabled={!hasFilters}>
@@ -234,7 +214,7 @@ function Clientes() {
             {filtered.map((c) => {
               const d = diasAte(c.expiracao);
               const aberto = !!expandido[c.id];
-              const { usuario, senha, indicacao, pacote } = parseObs(c.observacoes);
+              const { usuario, senha, indicacao } = parseObs(c.observacoes);
               const toggle = () => setExpandido({ ...expandido, [c.id]: !aberto });
               return (
                 <Fragment key={c.id}>
@@ -268,7 +248,7 @@ function Clientes() {
                     <TableRow className="bg-muted/20 hover:bg-muted/20">
                       <TableCell></TableCell>
                       <TableCell colSpan={7}>
-                        <DetalhesCliente usuario={usuario} senha={senha} indicacao={indicacao} pacote={pacote} />
+                        <DetalhesCliente usuario={usuario} senha={senha} indicacao={indicacao} />
                       </TableCell>
                     </TableRow>
                   )}
@@ -287,7 +267,7 @@ function Clientes() {
         {filtered.map((c) => {
           const d = diasAte(c.expiracao);
           const aberto = !!expandido[c.id];
-          const { usuario, senha, indicacao, pacote } = parseObs(c.observacoes);
+          const { usuario, senha, indicacao } = parseObs(c.observacoes);
           const toggle = () => setExpandido({ ...expandido, [c.id]: !aberto });
           return (
             <div key={c.id} className="rounded-lg border bg-card overflow-hidden">
@@ -318,7 +298,7 @@ function Clientes() {
               </button>
               {aberto && (
                 <div className="border-t bg-muted/20 p-3 space-y-3">
-                  <DetalhesCliente usuario={usuario} senha={senha} indicacao={indicacao} pacote={pacote} />
+                  <DetalhesCliente usuario={usuario} senha={senha} indicacao={indicacao} />
                   <div className="flex flex-wrap gap-2">
                     <Button size="sm" variant="outline" onClick={() => gerarPix(c)}><QrCode className="mr-1 h-4 w-4" /> PIX</Button>
                     <Button size="sm" variant="outline" onClick={() => { setEditing(c); setOpen(true); }}><Pencil className="mr-1 h-4 w-4" /> Editar</Button>
@@ -335,12 +315,12 @@ function Clientes() {
 }
 
 function DetalhesCliente({
-  usuario, senha, indicacao, pacote,
-}: { usuario: string; senha: string; indicacao: string; pacote: string }) {
+  usuario, senha, indicacao,
+}: { usuario: string; senha: string; indicacao: string }) {
   const items = [
     { label: "Usuário", value: usuario, mono: true },
     { label: "Senha", value: senha, mono: true },
-    { label: "Indicação", value: indicacao || pacote, mono: false },
+    { label: "Indicação", value: indicacao, mono: false },
   ];
   const copy = (v: string) => {
     if (!v) return;
@@ -421,6 +401,7 @@ function ClienteForm({ editing, onSaved }: { editing: Cliente | null; onSaved: (
               <SelectContent>
                 <SelectItem value="mensal">Mensal</SelectItem>
                 <SelectItem value="trimestral">Trimestral</SelectItem>
+              <SelectItem value="semestral">Semestral</SelectItem>
                 <SelectItem value="anual">Anual</SelectItem>
               </SelectContent>
             </Select>
@@ -446,12 +427,12 @@ function ClienteForm({ editing, onSaved }: { editing: Cliente | null; onSaved: (
         <div className="space-y-1">
           <Label>Observações</Label>
           <Textarea
-            placeholder={"Usuario: seu_usuario | Senha: sua_senha | Pacote: Basic Plan"}
+            placeholder={"Usuario: seu_usuario | Senha: sua_senha | Indicação: origem"}
             value={form.observacoes ?? ""}
             onChange={(e) => setForm({ ...form, observacoes: e.target.value })}
           />
           <p className="text-xs text-muted-foreground">
-            Use o formato <code>Usuario: ... | Senha: ... | Pacote: ...</code> para que apareça formatado na listagem.
+            Use o formato <code>Usuario: ... | Senha: ... | Indicação: ...</code> para que apareça formatado na listagem.
           </p>
         </div>
         <DialogFooter>
