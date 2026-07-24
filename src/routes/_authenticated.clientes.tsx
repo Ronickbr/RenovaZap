@@ -61,9 +61,13 @@ function Clientes() {
 
   // Extrai "Conta:" e "Pacote:" das observações (formato importado da planilha)
   const parseObs = (obs: string | null) => {
-    const conta = obs?.match(/Conta:\s*([^\|]+)/i)?.[1]?.trim() ?? "";
+    const usuario =
+      obs?.match(/Usuario:\s*([^\|]+)/i)?.[1]?.trim() ??
+      obs?.match(/Conta:\s*([^\|]+)/i)?.[1]?.trim() ??
+      "";
+    const senha = obs?.match(/Senha:\s*([^\|]+)/i)?.[1]?.trim() ?? "";
     const pacote = obs?.match(/Pacote:\s*([^\|]+)/i)?.[1]?.trim() ?? "";
-    return { conta, pacote };
+    return { usuario, senha, pacote, conta: usuario };
   };
 
   const pacotes = Array.from(
@@ -89,7 +93,7 @@ function Clientes() {
       c.nome.toLowerCase().includes(query) ||
       c.telefone.toLowerCase().includes(query) ||
       (c.email ?? "").toLowerCase().includes(query) ||
-      conta.toLowerCase().includes(query) ||
+      (parseObs(c.observacoes).usuario).toLowerCase().includes(query) ||
       pacote.toLowerCase().includes(query);
     const matchStatus = statusFilter === "todos" || c.status === statusFilter;
     const matchPacote = pacoteFilter === "todos" || pacote === pacoteFilter;
