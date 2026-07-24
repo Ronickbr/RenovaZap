@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Fragment, useState } from "react";
+import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { gerarCobrancaInfinitepay } from "@/lib/infinitepay.functions";
@@ -46,7 +47,6 @@ function Clientes() {
   const [pacoteFilter, setPacoteFilter] = useState<string>("todos");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Cliente | null>(null);
-  const [agrupar, setAgrupar] = useState(true);
   const [expandido, setExpandido] = useState<Record<string, boolean>>({});
   const [mostrarAntigos, setMostrarAntigos] = useState(false);
 
@@ -108,25 +108,6 @@ function Clientes() {
     setPacoteFilter("todos");
   };
   const hasFilters = q !== "" || statusFilter !== "todos" || pacoteFilter !== "todos";
-
-  // Agrupa por telefone (usuários com múltiplas contas)
-  const grupos = (() => {
-    const map = new Map<string, Cliente[]>();
-    for (const c of filtered) {
-      const key = (c.telefone || c.id).trim();
-      if (!map.has(key)) map.set(key, []);
-      map.get(key)!.push(c);
-    }
-    return Array.from(map.entries())
-      .map(([telefone, itens]) => ({
-        telefone,
-        nome: itens[0].nome,
-        itens: itens.sort((a, b) => a.expiracao.localeCompare(b.expiracao)),
-        proxVenc: itens.reduce((min, c) => c.expiracao < min ? c.expiracao : min, itens[0].expiracao),
-        totalValor: itens.reduce((s, c) => s + Number(c.valor || 0), 0),
-      }))
-      .sort((a, b) => a.proxVenc.localeCompare(b.proxVenc));
-  })();
 
   const remove = async (id: string) => {
     if (!confirm("Excluir este cliente?")) return;
