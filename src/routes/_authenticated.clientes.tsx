@@ -67,7 +67,9 @@ function Clientes() {
       "";
     const senha = obs?.match(/Senha:\s*([^\|]+)/i)?.[1]?.trim() ?? "";
     const pacote = obs?.match(/Pacote:\s*([^\|]+)/i)?.[1]?.trim() ?? "";
-    return { usuario, senha, pacote, conta: usuario };
+    const indicacao =
+      obs?.match(/Indica[cç][aã]o:\s*([^\|]+)/i)?.[1]?.trim() ?? "";
+    return { usuario, senha, pacote, indicacao, conta: usuario };
   };
 
   const pacotes = Array.from(
