@@ -166,6 +166,7 @@ function Clientes() {
             <Button><Plus className="mr-2 h-4 w-4" /> Novo cliente</Button>
           </DialogTrigger>
           <ClienteForm
+            key={editing?.id ?? "new"}
             editing={editing}
             onSaved={() => { setOpen(false); setEditing(null); qc.invalidateQueries({ queryKey: ["clientes"] }); }}
           />
