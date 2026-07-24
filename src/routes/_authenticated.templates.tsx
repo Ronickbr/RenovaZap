@@ -84,7 +84,7 @@ function Templates() {
         </div>
         <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setEditing(null); }}>
           <DialogTrigger asChild><Button><Plus className="mr-2 h-4 w-4" /> Novo</Button></DialogTrigger>
-          <TemplateForm editing={editing} onSaved={() => { setOpen(false); setEditing(null); qc.invalidateQueries({ queryKey: ["templates"] }); }} />
+          <TemplateForm key={editing?.id ?? "new"} editing={editing} onSaved={() => { setOpen(false); setEditing(null); qc.invalidateQueries({ queryKey: ["templates"] }); }} />
         </Dialog>
       </div>
 
