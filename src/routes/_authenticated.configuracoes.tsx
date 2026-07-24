@@ -23,6 +23,10 @@ type Config = {
   tempo_expiracao_pix: number;
   dias_aviso: number[];
   infinitepay_handle: string | null;
+  evolution_url: string | null;
+  evolution_api_key: string | null;
+  evolution_instance: string | null;
+  n8n_webhook_url: string | null;
 };
 
 function Configuracoes() {
@@ -51,6 +55,10 @@ function Configuracoes() {
       tempo_expiracao_pix: Number(form.tempo_expiracao_pix),
       dias_aviso: form.dias_aviso,
       infinitepay_handle: form.infinitepay_handle?.trim() || null,
+      evolution_url: form.evolution_url?.trim() || null,
+      evolution_api_key: form.evolution_api_key?.trim() || null,
+      evolution_instance: form.evolution_instance?.trim() || null,
+      n8n_webhook_url: form.n8n_webhook_url?.trim() || null,
     }).eq("id", form.id);
     if (error) return toast.error(error.message);
     toast.success("Configurações salvas");
@@ -108,6 +116,49 @@ function Configuracoes() {
             </div>
           </CardContent>
         </Card>
+
+        {form.provedor_whatsapp === "evolution" && (
+          <Card className="md:col-span-2">
+            <CardHeader><CardTitle>Evolution API + n8n</CardTitle></CardHeader>
+            <CardContent className="space-y-3">
+              <div className="space-y-1">
+                <Label>URL da Evolution API</Label>
+                <Input
+                  placeholder="https://evolution.seudominio.com"
+                  value={form.evolution_url ?? ""}
+                  onChange={(e) => setForm({ ...form, evolution_url: e.target.value })}
+                />
+                <p className="text-xs text-muted-foreground">Endereço base da sua instância Evolution (sem barra no final).</p>
+              </div>
+              <div className="space-y-1">
+                <Label>API Key</Label>
+                <Input
+                  type="password"
+                  placeholder="chave global ou da instância"
+                  value={form.evolution_api_key ?? ""}
+                  onChange={(e) => setForm({ ...form, evolution_api_key: e.target.value })}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label>Nome da Instância</Label>
+                <Input
+                  placeholder="ex.: renovazap"
+                  value={form.evolution_instance ?? ""}
+                  onChange={(e) => setForm({ ...form, evolution_instance: e.target.value })}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label>Webhook n8n (opcional)</Label>
+                <Input
+                  placeholder="https://n8n.seudominio.com/webhook/renovazap"
+                  value={form.n8n_webhook_url ?? ""}
+                  onChange={(e) => setForm({ ...form, n8n_webhook_url: e.target.value })}
+                />
+                <p className="text-xs text-muted-foreground">Se preenchido, mensagens são enviadas via n8n ao invés de direto na Evolution.</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <Card>
           <CardHeader><CardTitle>Valores e prazos</CardTitle></CardHeader>
