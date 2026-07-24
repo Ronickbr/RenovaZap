@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, Sparkles, ShieldCheck, Zap } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -57,17 +57,19 @@ function AuthPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/30 p-6">
-      <div className="w-full max-w-md">
-        <Link to="/" className="mb-6 flex items-center justify-center gap-2 text-lg font-semibold">
-          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background p-6">
+      <div className="absolute inset-0 bg-gradient-hero pointer-events-none" />
+      <div className="absolute left-1/2 top-1/3 -z-10 h-[500px] w-[700px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/20 blur-[130px]" />
+      <div className="relative w-full max-w-md">
+        <Link to="/" className="mb-8 flex items-center justify-center gap-2.5 font-semibold">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-primary text-primary-foreground shadow-glow">
             <MessageCircle className="h-4 w-4" />
           </div>
-          RenovaZap
+          <span className="font-display text-lg tracking-tight">RenovaZap</span>
         </Link>
-        <Card>
+        <Card className="border-border/60 bg-card/80 shadow-elegant backdrop-blur-xl">
           <CardHeader>
-            <CardTitle>Acesso ao painel</CardTitle>
+            <CardTitle className="font-display text-2xl">Acesso ao painel</CardTitle>
             <CardDescription>Entre ou crie sua conta administrativa.</CardDescription>
           </CardHeader>
           <CardContent>
@@ -86,7 +88,7 @@ function AuthPage() {
                     <Label htmlFor="pw">Senha</Label>
                     <Input id="pw" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
                   </div>
-                  <Button type="submit" className="w-full" disabled={busy}>
+                  <Button type="submit" className="w-full bg-gradient-primary text-primary-foreground shadow-elegant hover:opacity-90" disabled={busy}>
                     {busy ? "Entrando..." : "Entrar"}
                   </Button>
                 </form>
@@ -101,10 +103,11 @@ function AuthPage() {
                     <Label htmlFor="pw2">Senha (mín 6)</Label>
                     <Input id="pw2" type="password" minLength={6} required value={password} onChange={(e) => setPassword(e.target.value)} />
                   </div>
-                  <Button type="submit" className="w-full" disabled={busy}>
+                  <Button type="submit" className="w-full bg-gradient-primary text-primary-foreground shadow-elegant hover:opacity-90" disabled={busy}>
                     {busy ? "Criando..." : "Criar conta"}
                   </Button>
                   <p className="text-xs text-muted-foreground">
+                    <Sparkles className="mr-1 inline h-3 w-3 text-primary" />
                     O primeiro usuário cadastrado se torna administrador automaticamente.
                   </p>
                 </form>
@@ -112,6 +115,10 @@ function AuthPage() {
             </Tabs>
           </CardContent>
         </Card>
+        <div className="mt-6 flex items-center justify-center gap-5 text-xs text-muted-foreground">
+          <div className="flex items-center gap-1.5"><ShieldCheck className="h-3.5 w-3.5 text-primary" /> LGPD</div>
+          <div className="flex items-center gap-1.5"><Zap className="h-3.5 w-3.5 text-primary" /> Setup 5min</div>
+        </div>
       </div>
     </div>
   );
