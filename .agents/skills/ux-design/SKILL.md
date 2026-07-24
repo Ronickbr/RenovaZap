@@ -1,5 +1,5 @@
 ---
-name: UX Design
+name: ux-design
 description: Modelo UX em cinco planos (Estratégia → Escopo → Estrutura → Esqueleto → Superfície) com foco em pesquisa, personas e arquitetura da informação. Define fluxos de usuário com máximo 3 cliques para qualquer destino, feedback imediato abaixo de 400ms e tolerância a erros. Aplica as principais leis de UX (Fitts, Hick, Miller) no projeto.
 ---
 
