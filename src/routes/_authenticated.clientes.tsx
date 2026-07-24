@@ -315,13 +315,21 @@ function Clientes() {
                   </TableRow>
                   {aberto && g.itens.map((c) => {
                     const dc = diasAte(c.expiracao);
-                    const { conta, pacote } = parseObs(c.observacoes);
+                    const { usuario, senha, pacote } = parseObs(c.observacoes);
                     return (
                       <TableRow key={c.id}>
                         <TableCell></TableCell>
                         <TableCell className="pl-8 text-sm">
-                          {conta || pacote || c.nome}
-                          {pacote && conta && <span className="ml-1 text-xs text-muted-foreground">· {pacote}</span>}
+                          <div className="flex flex-col">
+                            <span>{usuario || pacote || c.nome}</span>
+                            {(usuario || senha) && (
+                              <span className="text-xs text-muted-foreground">
+                                {usuario && <>Usuário: <code>{usuario}</code></>}
+                                {senha && <> · Senha: <code>{senha}</code></>}
+                              </span>
+                            )}
+                            {pacote && <span className="text-xs text-muted-foreground">Pacote: {pacote}</span>}
+                          </div>
                         </TableCell>
                         <TableCell className="text-xs text-muted-foreground">{c.telefone}</TableCell>
                         <TableCell>{c.plano}</TableCell>
