@@ -89,8 +89,12 @@ export type Database = {
       configuracoes: {
         Row: {
           dias_aviso: number[]
+          evolution_api_key: string | null
+          evolution_instance: string | null
+          evolution_url: string | null
           id: number
           infinitepay_handle: string | null
+          n8n_webhook_url: string | null
           provedor_pix: string
           provedor_whatsapp: string
           tempo_expiracao_pix: number
@@ -100,8 +104,12 @@ export type Database = {
         }
         Insert: {
           dias_aviso?: number[]
+          evolution_api_key?: string | null
+          evolution_instance?: string | null
+          evolution_url?: string | null
           id?: number
           infinitepay_handle?: string | null
+          n8n_webhook_url?: string | null
           provedor_pix?: string
           provedor_whatsapp?: string
           tempo_expiracao_pix?: number
@@ -111,8 +119,12 @@ export type Database = {
         }
         Update: {
           dias_aviso?: number[]
+          evolution_api_key?: string | null
+          evolution_instance?: string | null
+          evolution_url?: string | null
           id?: number
           infinitepay_handle?: string | null
+          n8n_webhook_url?: string | null
           provedor_pix?: string
           provedor_whatsapp?: string
           tempo_expiracao_pix?: number
