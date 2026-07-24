@@ -204,18 +204,6 @@ function Clientes() {
 
       <div className="flex items-center gap-2 text-sm">
         <label className="flex items-center gap-2 cursor-pointer">
-          <input type="checkbox" checked={agrupar} onChange={(e) => setAgrupar(e.target.checked)} />
-          Agrupar por telefone (unifica contas do mesmo usuário)
-        </label>
-        {agrupar && (
-          <span className="text-muted-foreground">
-            · {grupos.length} usuário(s), {filtered.length} conta(s)
-          </span>
-        )}
-      </div>
-
-      <div className="flex items-center gap-2 text-sm">
-        <label className="flex items-center gap-2 cursor-pointer">
           <input type="checkbox" checked={mostrarAntigos} onChange={(e) => setMostrarAntigos(e.target.checked)} />
           Mostrar clientes vencidos há mais de 90 dias
         </label>
@@ -224,15 +212,16 @@ function Clientes() {
         )}
       </div>
 
-      <div className="rounded-md border bg-card">
+      {/* Desktop: tabela */}
+      <div className="hidden md:block rounded-md border bg-card overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
-              {agrupar && <TableHead className="w-8"></TableHead>}
+              <TableHead className="w-8"></TableHead>
               <TableHead>Nome</TableHead>
               <TableHead>Telefone</TableHead>
-              <TableHead>Plano</TableHead>
               <TableHead>Valor</TableHead>
+              <TableHead>Plano</TableHead>
               <TableHead>Vencimento</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Ações</TableHead>
@@ -240,106 +229,147 @@ function Clientes() {
           </TableHeader>
           <TableBody>
             {filtered.length === 0 && (
-              <TableRow><TableCell colSpan={agrupar ? 8 : 7} className="text-center text-sm text-muted-foreground py-8">Nenhum cliente</TableCell></TableRow>
+              <TableRow><TableCell colSpan={8} className="text-center text-sm text-muted-foreground py-8">Nenhum cliente</TableCell></TableRow>
             )}
-            {!agrupar && filtered.map((c) => {
+            {filtered.map((c) => {
               const d = diasAte(c.expiracao);
+              const aberto = !!expandido[c.id];
+              const { usuario, senha, indicacao, pacote } = parseObs(c.observacoes);
+              const toggle = () => setExpandido({ ...expandido, [c.id]: !aberto });
               return (
-                <TableRow key={c.id}>
-                  <TableCell className="font-medium">{c.nome}</TableCell>
-                  <TableCell>{c.telefone}</TableCell>
-                  <TableCell>{c.plano}</TableCell>
-                  <TableCell>{fmtBRL(c.valor)}</TableCell>
-                  <TableCell>
-                    {fmtDate(c.expiracao)}{" "}
-                    <span className={`ml-1 text-xs ${d < 0 ? "text-destructive" : d <= 3 ? "text-orange-500" : "text-muted-foreground"}`}>
-                      ({d < 0 ? `vencido ${Math.abs(d)}d` : d === 0 ? "hoje" : `${d}d`})
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={c.status === "ativo" ? "default" : "secondary"}>{c.status}</Badge>
-                  </TableCell>
-                  <TableCell className="text-right space-x-1">
-                    <Button size="sm" variant="ghost" onClick={() => gerarPix(c)} title="Gerar PIX"><QrCode className="h-4 w-4" /></Button>
-                    <Button size="sm" variant="ghost" onClick={() => { setEditing(c); setOpen(true); }}><Pencil className="h-4 w-4" /></Button>
-                    <Button size="sm" variant="ghost" onClick={() => remove(c.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-            {agrupar && grupos.map((g) => {
-              const aberto = expandido[g.telefone] ?? (g.itens.length === 1);
-              const d = diasAte(g.proxVenc);
-              return (
-                <Fragment key={g.telefone}>
-                  <TableRow className="bg-muted/30">
+                <Fragment key={c.id}>
+                  <TableRow
+                    className={cn("cursor-pointer hover:bg-muted/50", aberto && "bg-muted/40")}
+                    onClick={toggle}
+                  >
                     <TableCell>
-                      {g.itens.length > 1 && (
-                        <button onClick={() => setExpandido({ ...expandido, [g.telefone]: !aberto })}>
-                          {aberto ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                        </button>
-                      )}
+                      {aberto ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                     </TableCell>
-                    <TableCell className="font-medium">
-                      {g.nome}
-                      {g.itens.length > 1 && <Badge variant="secondary" className="ml-2">{g.itens.length} contas</Badge>}
-                    </TableCell>
-                    <TableCell>{g.telefone}</TableCell>
-                    <TableCell className="text-muted-foreground">—</TableCell>
-                    <TableCell>{fmtBRL(g.totalValor)}</TableCell>
+                    <TableCell className="font-medium">{c.nome}</TableCell>
+                    <TableCell>{c.telefone || <span className="text-xs text-muted-foreground">—</span>}</TableCell>
+                    <TableCell>{Number(c.valor) > 0 ? fmtBRL(c.valor) : <span className="text-xs text-muted-foreground">padrão</span>}</TableCell>
+                    <TableCell className="capitalize">{c.plano}</TableCell>
                     <TableCell>
-                      {fmtDate(g.proxVenc)}{" "}
+                      {fmtDate(c.expiracao)}{" "}
                       <span className={`ml-1 text-xs ${d < 0 ? "text-destructive" : d <= 3 ? "text-orange-500" : "text-muted-foreground"}`}>
                         ({d < 0 ? `vencido ${Math.abs(d)}d` : d === 0 ? "hoje" : `${d}d`})
                       </span>
                     </TableCell>
-                    <TableCell></TableCell>
-                    <TableCell></TableCell>
+                    <TableCell>
+                      <Badge variant={c.status === "ativo" ? "default" : "secondary"}>{c.status}</Badge>
+                    </TableCell>
+                    <TableCell className="text-right space-x-1" onClick={(e) => e.stopPropagation()}>
+                      <Button size="sm" variant="ghost" onClick={() => gerarPix(c)} title="Gerar PIX"><QrCode className="h-4 w-4" /></Button>
+                      <Button size="sm" variant="ghost" onClick={() => { setEditing(c); setOpen(true); }}><Pencil className="h-4 w-4" /></Button>
+                      <Button size="sm" variant="ghost" onClick={() => remove(c.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                    </TableCell>
                   </TableRow>
-                  {aberto && g.itens.map((c) => {
-                    const dc = diasAte(c.expiracao);
-                    const { usuario, senha, pacote } = parseObs(c.observacoes);
-                    return (
-                      <TableRow key={c.id}>
-                        <TableCell></TableCell>
-                        <TableCell className="pl-8 text-sm">
-                          <div className="flex flex-col">
-                            <span>{usuario || pacote || c.nome}</span>
-                            {(usuario || senha) && (
-                              <span className="text-xs text-muted-foreground">
-                                {usuario && <>Usuário: <code>{usuario}</code></>}
-                                {senha && <> · Senha: <code>{senha}</code></>}
-                              </span>
-                            )}
-                            {pacote && <span className="text-xs text-muted-foreground">Pacote: {pacote}</span>}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-xs text-muted-foreground">{c.telefone}</TableCell>
-                        <TableCell>{c.plano}</TableCell>
-                        <TableCell>{Number(c.valor) > 0 ? fmtBRL(c.valor) : <span className="text-xs text-muted-foreground">padrão</span>}</TableCell>
-                        <TableCell>
-                          {fmtDate(c.expiracao)}{" "}
-                          <span className={`ml-1 text-xs ${dc < 0 ? "text-destructive" : dc <= 3 ? "text-orange-500" : "text-muted-foreground"}`}>
-                            ({dc < 0 ? `vencido ${Math.abs(dc)}d` : dc === 0 ? "hoje" : `${dc}d`})
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={c.status === "ativo" ? "default" : "secondary"}>{c.status}</Badge>
-                        </TableCell>
-                        <TableCell className="text-right space-x-1">
-                          <Button size="sm" variant="ghost" onClick={() => gerarPix(c)} title="Gerar PIX"><QrCode className="h-4 w-4" /></Button>
-                          <Button size="sm" variant="ghost" onClick={() => { setEditing(c); setOpen(true); }}><Pencil className="h-4 w-4" /></Button>
-                          <Button size="sm" variant="ghost" onClick={() => remove(c.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
+                  {aberto && (
+                    <TableRow className="bg-muted/20 hover:bg-muted/20">
+                      <TableCell></TableCell>
+                      <TableCell colSpan={7}>
+                        <DetalhesCliente usuario={usuario} senha={senha} indicacao={indicacao} pacote={pacote} />
+                      </TableCell>
+                    </TableRow>
+                  )}
                 </Fragment>
               );
             })}
           </TableBody>
         </Table>
       </div>
+
+      {/* Mobile: cards */}
+      <div className="md:hidden space-y-2">
+        {filtered.length === 0 && (
+          <div className="rounded-md border bg-card p-6 text-center text-sm text-muted-foreground">Nenhum cliente</div>
+        )}
+        {filtered.map((c) => {
+          const d = diasAte(c.expiracao);
+          const aberto = !!expandido[c.id];
+          const { usuario, senha, indicacao, pacote } = parseObs(c.observacoes);
+          const toggle = () => setExpandido({ ...expandido, [c.id]: !aberto });
+          return (
+            <div key={c.id} className="rounded-lg border bg-card overflow-hidden">
+              <button
+                onClick={toggle}
+                className="w-full text-left p-3 flex items-start gap-3 hover:bg-muted/50 transition"
+              >
+                <div className="mt-1 shrink-0">
+                  {aberto ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                </div>
+                <div className="min-w-0 flex-1 space-y-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-medium truncate">{c.nome}</span>
+                    <Badge variant={c.status === "ativo" ? "default" : "secondary"} className="shrink-0">{c.status}</Badge>
+                  </div>
+                  <div className="text-xs text-muted-foreground truncate">
+                    {c.telefone || "sem telefone"} · <span className="capitalize">{c.plano}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground">
+                      {Number(c.valor) > 0 ? fmtBRL(c.valor) : "valor padrão"}
+                    </span>
+                    <span className={d < 0 ? "text-destructive" : d <= 3 ? "text-orange-500" : "text-muted-foreground"}>
+                      {fmtDate(c.expiracao)} ({d < 0 ? `vencido ${Math.abs(d)}d` : d === 0 ? "hoje" : `${d}d`})
+                    </span>
+                  </div>
+                </div>
+              </button>
+              {aberto && (
+                <div className="border-t bg-muted/20 p-3 space-y-3">
+                  <DetalhesCliente usuario={usuario} senha={senha} indicacao={indicacao} pacote={pacote} />
+                  <div className="flex flex-wrap gap-2">
+                    <Button size="sm" variant="outline" onClick={() => gerarPix(c)}><QrCode className="mr-1 h-4 w-4" /> PIX</Button>
+                    <Button size="sm" variant="outline" onClick={() => { setEditing(c); setOpen(true); }}><Pencil className="mr-1 h-4 w-4" /> Editar</Button>
+                    <Button size="sm" variant="outline" onClick={() => remove(c.id)}><Trash2 className="mr-1 h-4 w-4 text-destructive" /> Excluir</Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function DetalhesCliente({
+  usuario, senha, indicacao, pacote,
+}: { usuario: string; senha: string; indicacao: string; pacote: string }) {
+  const items = [
+    { label: "Usuário", value: usuario, mono: true },
+    { label: "Senha", value: senha, mono: true },
+    { label: "Indicação", value: indicacao || pacote, mono: false },
+  ];
+  const copy = (v: string) => {
+    if (!v) return;
+    navigator.clipboard?.writeText(v);
+    toast.success("Copiado");
+  };
+  return (
+    <div className="grid gap-3 sm:grid-cols-3">
+      {items.map((it) => (
+        <div key={it.label} className="rounded-md border bg-background p-3">
+          <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            {it.label}
+          </div>
+          {it.value ? (
+            <button
+              onClick={() => copy(it.value)}
+              className={cn(
+                "mt-1 block w-full truncate text-left text-sm hover:text-primary transition",
+                it.mono && "font-mono",
+              )}
+              title="Clique para copiar"
+            >
+              {it.value}
+            </button>
+          ) : (
+            <div className="mt-1 text-sm text-muted-foreground">—</div>
+          )}
+        </div>
+      ))}
     </div>
   );
 }
