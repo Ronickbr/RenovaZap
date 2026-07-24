@@ -430,7 +430,17 @@ function ClienteForm({ editing, onSaved }: { editing: Cliente | null; onSaved: (
           </div>
         </div>
         <div className="space-y-1"><Label>Vencimento</Label><Input type="date" required value={form.expiracao ?? ""} onChange={(e) => setForm({ ...form, expiracao: e.target.value })} /></div>
-        <div className="space-y-1"><Label>Observações</Label><Textarea value={form.observacoes ?? ""} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} /></div>
+        <div className="space-y-1">
+          <Label>Observações</Label>
+          <Textarea
+            placeholder={"Usuario: seu_usuario | Senha: sua_senha | Pacote: Basic Plan"}
+            value={form.observacoes ?? ""}
+            onChange={(e) => setForm({ ...form, observacoes: e.target.value })}
+          />
+          <p className="text-xs text-muted-foreground">
+            Use o formato <code>Usuario: ... | Senha: ... | Pacote: ...</code> para que apareça formatado na listagem.
+          </p>
+        </div>
         <DialogFooter>
           <Button type="submit" disabled={busy}>{busy ? "Salvando…" : "Salvar"}</Button>
         </DialogFooter>
