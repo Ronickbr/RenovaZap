@@ -48,6 +48,7 @@ function Clientes() {
   const [editing, setEditing] = useState<Cliente | null>(null);
   const [agrupar, setAgrupar] = useState(true);
   const [expandido, setExpandido] = useState<Record<string, boolean>>({});
+  const [mostrarAntigos, setMostrarAntigos] = useState(false);
 
   const { data: clientes = [] } = useQuery({
     queryKey: ["clientes"],
@@ -70,7 +71,18 @@ function Clientes() {
   ).sort();
 
   const query = q.trim().toLowerCase();
-  const filtered = clientes.filter((c) => {
+  const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+  const ocultosAntigos = clientes.filter((c) => {
+    const exp = new Date(c.expiracao + "T00:00:00");
+    return (hoje.getTime() - exp.getTime()) / 86400000 > 90;
+  }).length;
+  const visiveis = mostrarAntigos
+    ? clientes
+    : clientes.filter((c) => {
+        const exp = new Date(c.expiracao + "T00:00:00");
+        return (hoje.getTime() - exp.getTime()) / 86400000 <= 90;
+      });
+  const filtered = visiveis.filter((c) => {
     const { conta, pacote } = parseObs(c.observacoes);
     const matchQ =
       !query ||
@@ -212,6 +224,16 @@ function Clientes() {
           <span className="text-muted-foreground">
             · {grupos.length} usuário(s), {filtered.length} conta(s)
           </span>
+        )}
+      </div>
+
+      <div className="flex items-center gap-2 text-sm">
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" checked={mostrarAntigos} onChange={(e) => setMostrarAntigos(e.target.checked)} />
+          Mostrar clientes vencidos há mais de 90 dias
+        </label>
+        {ocultosAntigos > 0 && !mostrarAntigos && (
+          <span className="text-muted-foreground">· {ocultosAntigos} oculto(s)</span>
         )}
       </div>
 
