@@ -13,6 +13,11 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { templateSchema, firstIssue } from "@/lib/schemas";
 
 export const Route = createFileRoute("/_authenticated/templates")({
   head: () => ({ meta: [{ title: "Templates — RenovaZap" }] }),
@@ -40,6 +45,8 @@ function Templates() {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Template | null>(null);
+  const [toDelete, setToDelete] = useState<Template | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const { data = [] } = useQuery({
     queryKey: ["templates"],
@@ -50,9 +57,12 @@ function Templates() {
     },
   });
 
-  const remove = async (id: string) => {
-    if (!confirm("Excluir template?")) return;
-    const { error } = await supabase.from("templates").delete().eq("id", id);
+  const confirmDelete = async () => {
+    if (!toDelete) return;
+    setDeleting(true);
+    const { error } = await supabase.from("templates").delete().eq("id", toDelete.id);
+    setDeleting(false);
+    setToDelete(null);
     if (error) return toast.error(error.message);
     toast.success("Excluído");
     qc.invalidateQueries({ queryKey: ["templates"] });
@@ -89,7 +99,7 @@ function Templates() {
               <div className="flex items-center gap-2">
                 <Switch checked={t.ativo} onCheckedChange={() => toggle(t)} />
                 <Button size="sm" variant="ghost" onClick={() => { setEditing(t); setOpen(true); }}><Pencil className="h-4 w-4" /></Button>
-                <Button size="sm" variant="ghost" onClick={() => remove(t.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                <Button size="sm" variant="ghost" onClick={() => setToDelete(t)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
               </div>
             </CardHeader>
             <CardContent>
@@ -99,6 +109,23 @@ function Templates() {
         ))}
         {data.length === 0 && <p className="text-sm text-muted-foreground">Nenhum template ainda.</p>}
       </div>
+
+      <AlertDialog open={!!toDelete} onOpenChange={(v) => !v && setToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir template?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {toDelete ? `"${toDelete.nome}" será removido permanentemente.` : ""}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction disabled={deleting} onClick={(e) => { e.preventDefault(); confirmDelete(); }}>
+              {deleting ? "Excluindo…" : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
@@ -111,8 +138,18 @@ function TemplateForm({ editing, onSaved }: { editing: Template | null; onSaved:
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const parsed = templateSchema.safeParse({
+      nome: form.nome ?? "",
+      gatilho: form.gatilho ?? "manual",
+      mensagem: form.mensagem ?? "",
+      ativo: !!form.ativo,
+    });
+    if (!parsed.success) {
+      toast.error(firstIssue(parsed.error));
+      return;
+    }
     setBusy(true);
-    const payload = { nome: form.nome!, gatilho: form.gatilho!, mensagem: form.mensagem!, ativo: !!form.ativo };
+    const payload = parsed.data;
     const { error } = editing
       ? await supabase.from("templates").update(payload).eq("id", editing.id)
       : await supabase.from("templates").insert(payload);
