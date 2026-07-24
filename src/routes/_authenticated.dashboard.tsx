@@ -14,11 +14,15 @@ function Dashboard() {
   const { data: stats } = useQuery({
     queryKey: ["dashboard-stats"],
     queryFn: async () => {
+      const hoje = new Date().toISOString().slice(0, 10);
+      const limite90 = new Date();
+      limite90.setDate(limite90.getDate() - 90);
+      const limite90Str = limite90.toISOString().slice(0, 10);
       const [{ count: totalClientes }, { count: ativos }, { count: vencidos }, pagamentosPend] =
         await Promise.all([
-          supabase.from("clientes").select("*", { count: "exact", head: true }),
-          supabase.from("clientes").select("*", { count: "exact", head: true }).eq("status", "ativo"),
-          supabase.from("clientes").select("*", { count: "exact", head: true }).lt("expiracao", new Date().toISOString().slice(0, 10)),
+          supabase.from("clientes").select("*", { count: "exact", head: true }).gte("expiracao", limite90Str),
+          supabase.from("clientes").select("*", { count: "exact", head: true }).eq("status", "ativo").gte("expiracao", limite90Str),
+          supabase.from("clientes").select("*", { count: "exact", head: true }).lt("expiracao", hoje).gte("expiracao", limite90Str),
           supabase.from("pagamentos").select("valor").eq("status", "pendente"),
         ]);
       const pendValor = (pagamentosPend.data ?? []).reduce((s: number, p: any) => s + Number(p.valor), 0);
@@ -36,10 +40,13 @@ function Dashboard() {
     queryFn: async () => {
       const in14 = new Date();
       in14.setDate(in14.getDate() + 14);
+      const limite90 = new Date();
+      limite90.setDate(limite90.getDate() - 90);
       const { data } = await supabase
         .from("clientes")
         .select("*")
         .lte("expiracao", in14.toISOString().slice(0, 10))
+        .gte("expiracao", limite90.toISOString().slice(0, 10))
         .order("expiracao", { ascending: true })
         .limit(10);
       return data ?? [];
