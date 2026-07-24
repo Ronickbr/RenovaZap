@@ -61,9 +61,13 @@ function Clientes() {
 
   // Extrai "Conta:" e "Pacote:" das observações (formato importado da planilha)
   const parseObs = (obs: string | null) => {
-    const conta = obs?.match(/Conta:\s*([^\|]+)/i)?.[1]?.trim() ?? "";
+    const usuario =
+      obs?.match(/Usuario:\s*([^\|]+)/i)?.[1]?.trim() ??
+      obs?.match(/Conta:\s*([^\|]+)/i)?.[1]?.trim() ??
+      "";
+    const senha = obs?.match(/Senha:\s*([^\|]+)/i)?.[1]?.trim() ?? "";
     const pacote = obs?.match(/Pacote:\s*([^\|]+)/i)?.[1]?.trim() ?? "";
-    return { conta, pacote };
+    return { usuario, senha, pacote, conta: usuario };
   };
 
   const pacotes = Array.from(
@@ -89,7 +93,7 @@ function Clientes() {
       c.nome.toLowerCase().includes(query) ||
       c.telefone.toLowerCase().includes(query) ||
       (c.email ?? "").toLowerCase().includes(query) ||
-      conta.toLowerCase().includes(query) ||
+      (parseObs(c.observacoes).usuario).toLowerCase().includes(query) ||
       pacote.toLowerCase().includes(query);
     const matchStatus = statusFilter === "todos" || c.status === statusFilter;
     const matchPacote = pacoteFilter === "todos" || pacote === pacoteFilter;
@@ -311,13 +315,21 @@ function Clientes() {
                   </TableRow>
                   {aberto && g.itens.map((c) => {
                     const dc = diasAte(c.expiracao);
-                    const { conta, pacote } = parseObs(c.observacoes);
+                    const { usuario, senha, pacote } = parseObs(c.observacoes);
                     return (
                       <TableRow key={c.id}>
                         <TableCell></TableCell>
                         <TableCell className="pl-8 text-sm">
-                          {conta || pacote || c.nome}
-                          {pacote && conta && <span className="ml-1 text-xs text-muted-foreground">· {pacote}</span>}
+                          <div className="flex flex-col">
+                            <span>{usuario || pacote || c.nome}</span>
+                            {(usuario || senha) && (
+                              <span className="text-xs text-muted-foreground">
+                                {usuario && <>Usuário: <code>{usuario}</code></>}
+                                {senha && <> · Senha: <code>{senha}</code></>}
+                              </span>
+                            )}
+                            {pacote && <span className="text-xs text-muted-foreground">Pacote: {pacote}</span>}
+                          </div>
                         </TableCell>
                         <TableCell className="text-xs text-muted-foreground">{c.telefone}</TableCell>
                         <TableCell>{c.plano}</TableCell>
@@ -418,7 +430,17 @@ function ClienteForm({ editing, onSaved }: { editing: Cliente | null; onSaved: (
           </div>
         </div>
         <div className="space-y-1"><Label>Vencimento</Label><Input type="date" required value={form.expiracao ?? ""} onChange={(e) => setForm({ ...form, expiracao: e.target.value })} /></div>
-        <div className="space-y-1"><Label>Observações</Label><Textarea value={form.observacoes ?? ""} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} /></div>
+        <div className="space-y-1">
+          <Label>Observações</Label>
+          <Textarea
+            placeholder={"Usuario: seu_usuario | Senha: sua_senha | Pacote: Basic Plan"}
+            value={form.observacoes ?? ""}
+            onChange={(e) => setForm({ ...form, observacoes: e.target.value })}
+          />
+          <p className="text-xs text-muted-foreground">
+            Use o formato <code>Usuario: ... | Senha: ... | Pacote: ...</code> para que apareça formatado na listagem.
+          </p>
+        </div>
         <DialogFooter>
           <Button type="submit" disabled={busy}>{busy ? "Salvando…" : "Salvar"}</Button>
         </DialogFooter>
