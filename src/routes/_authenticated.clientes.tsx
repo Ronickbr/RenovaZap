@@ -21,6 +21,11 @@ import { fmtBRL, fmtDate, diasAte } from "@/lib/format";
 import { Plus, Pencil, Trash2, QrCode, X } from "lucide-react";
 import { toast } from "sonner";
 import { ChevronDown, ChevronRight } from "lucide-react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { clienteSchema, firstIssue } from "@/lib/schemas";
 
 export const Route = createFileRoute("/_authenticated/clientes")({
   head: () => ({ meta: [{ title: "Clientes — RenovaZap" }] }),
@@ -48,6 +53,8 @@ function Clientes() {
   const [editing, setEditing] = useState<Cliente | null>(null);
   const [expandido, setExpandido] = useState<Record<string, boolean>>({});
   const [mostrarAntigos, setMostrarAntigos] = useState(false);
+  const [toDelete, setToDelete] = useState<Cliente | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const { data: clientes = [] } = useQuery({
     queryKey: ["clientes"],
@@ -98,9 +105,12 @@ function Clientes() {
   };
   const hasFilters = q !== "" || statusFilter !== "todos";
 
-  const remove = async (id: string) => {
-    if (!confirm("Excluir este cliente?")) return;
-    const { error } = await supabase.from("clientes").delete().eq("id", id);
+  const confirmDelete = async () => {
+    if (!toDelete) return;
+    setDeleting(true);
+    const { error } = await supabase.from("clientes").delete().eq("id", toDelete.id);
+    setDeleting(false);
+    setToDelete(null);
     if (error) return toast.error(error.message);
     toast.success("Cliente excluído");
     qc.invalidateQueries({ queryKey: ["clientes"] });
@@ -241,7 +251,7 @@ function Clientes() {
                     <TableCell className="text-right space-x-1" onClick={(e) => e.stopPropagation()}>
                       <Button size="sm" variant="ghost" onClick={() => gerarPix(c)} title="Gerar PIX"><QrCode className="h-4 w-4" /></Button>
                       <Button size="sm" variant="ghost" onClick={() => { setEditing(c); setOpen(true); }}><Pencil className="h-4 w-4" /></Button>
-                      <Button size="sm" variant="ghost" onClick={() => remove(c.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                      <Button size="sm" variant="ghost" onClick={() => setToDelete(c)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                     </TableCell>
                   </TableRow>
                   {aberto && (
@@ -302,7 +312,7 @@ function Clientes() {
                   <div className="flex flex-wrap gap-2">
                     <Button size="sm" variant="outline" onClick={() => gerarPix(c)}><QrCode className="mr-1 h-4 w-4" /> PIX</Button>
                     <Button size="sm" variant="outline" onClick={() => { setEditing(c); setOpen(true); }}><Pencil className="mr-1 h-4 w-4" /> Editar</Button>
-                    <Button size="sm" variant="outline" onClick={() => remove(c.id)}><Trash2 className="mr-1 h-4 w-4 text-destructive" /> Excluir</Button>
+                    <Button size="sm" variant="outline" onClick={() => setToDelete(c)}><Trash2 className="mr-1 h-4 w-4 text-destructive" /> Excluir</Button>
                   </div>
                 </div>
               )}
@@ -310,6 +320,23 @@ function Clientes() {
           );
         })}
       </div>
+
+      <AlertDialog open={!!toDelete} onOpenChange={(v) => !v && setToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir cliente?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {toDelete ? `"${toDelete.nome}" será removido permanentemente. Esta ação não pode ser desfeita.` : ""}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction disabled={deleting} onClick={(e) => { e.preventDefault(); confirmDelete(); }}>
+              {deleting ? "Excluindo…" : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
@@ -362,16 +389,30 @@ function ClienteForm({ editing, onSaved }: { editing: Cliente | null; onSaved: (
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const parsed = clienteSchema.safeParse({
+      nome: form.nome ?? "",
+      telefone: form.telefone ?? "",
+      email: form.email ?? "",
+      plano: form.plano ?? "mensal",
+      valor: form.valor ?? 0,
+      status: form.status ?? "ativo",
+      expiracao: form.expiracao ?? "",
+      observacoes: form.observacoes ?? "",
+    });
+    if (!parsed.success) {
+      toast.error(firstIssue(parsed.error));
+      return;
+    }
     setBusy(true);
     const payload = {
-      nome: form.nome!,
-      telefone: form.telefone!,
-      email: form.email || null,
-      plano: form.plano!,
-      valor: Number(form.valor ?? 0),
-      status: form.status!,
-      expiracao: form.expiracao!,
-      observacoes: form.observacoes || null,
+      nome: parsed.data.nome,
+      telefone: parsed.data.telefone,
+      email: parsed.data.email || null,
+      plano: parsed.data.plano,
+      valor: parsed.data.valor,
+      status: parsed.data.status,
+      expiracao: parsed.data.expiracao,
+      observacoes: parsed.data.observacoes || null,
     };
     const { error } = editing
       ? await supabase.from("clientes").update(payload).eq("id", editing.id)

@@ -8,6 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { configSchema, firstIssue } from "@/lib/schemas";
+import { Eye, EyeOff } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/configuracoes")({
   head: () => ({ meta: [{ title: "Configurações — RenovaZap" }] }),
@@ -42,24 +44,46 @@ function Configuracoes() {
 
   const [form, setForm] = useState<Config | null>(null);
   useEffect(() => { if (data) setForm(data); }, [data]);
+  const [saving, setSaving] = useState(false);
+  const [showKey, setShowKey] = useState(false);
 
   if (!form) return <p className="text-sm text-muted-foreground">Carregando…</p>;
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
-    const { error } = await supabase.from("configuracoes").update({
+    const parsed = configSchema.safeParse({
       provedor_pix: form.provedor_pix,
       provedor_whatsapp: form.provedor_whatsapp,
-      valor_mensal: Number(form.valor_mensal),
-      valor_anual: Number(form.valor_anual),
-      tempo_expiracao_pix: Number(form.tempo_expiracao_pix),
+      valor_mensal: form.valor_mensal,
+      valor_anual: form.valor_anual,
+      tempo_expiracao_pix: form.tempo_expiracao_pix,
       dias_aviso: form.dias_aviso,
-      infinitepay_handle: form.infinitepay_handle?.trim() || null,
-      evolution_url: form.evolution_url?.trim() || null,
-      evolution_api_key: form.evolution_api_key?.trim() || null,
-      evolution_instance: form.evolution_instance?.trim() || null,
-      n8n_webhook_url: form.n8n_webhook_url?.trim() || null,
+      infinitepay_handle: form.infinitepay_handle ?? "",
+      evolution_url: form.evolution_url ?? "",
+      evolution_api_key: form.evolution_api_key ?? "",
+      evolution_instance: form.evolution_instance ?? "",
+      n8n_webhook_url: form.n8n_webhook_url ?? "",
+    });
+    if (!parsed.success) {
+      toast.error(firstIssue(parsed.error));
+      return;
+    }
+    setSaving(true);
+    const d = parsed.data;
+    const { error } = await supabase.from("configuracoes").update({
+      provedor_pix: d.provedor_pix,
+      provedor_whatsapp: d.provedor_whatsapp,
+      valor_mensal: d.valor_mensal,
+      valor_anual: d.valor_anual,
+      tempo_expiracao_pix: d.tempo_expiracao_pix,
+      dias_aviso: d.dias_aviso,
+      infinitepay_handle: d.infinitepay_handle || null,
+      evolution_url: d.evolution_url || null,
+      evolution_api_key: d.evolution_api_key || null,
+      evolution_instance: d.evolution_instance || null,
+      n8n_webhook_url: d.n8n_webhook_url || null,
     }).eq("id", form.id);
+    setSaving(false);
     if (error) return toast.error(error.message);
     toast.success("Configurações salvas");
     qc.invalidateQueries({ queryKey: ["configuracoes"] });
@@ -132,12 +156,23 @@ function Configuracoes() {
               </div>
               <div className="space-y-1">
                 <Label>API Key</Label>
-                <Input
-                  type="password"
-                  placeholder="chave global ou da instância"
-                  value={form.evolution_api_key ?? ""}
-                  onChange={(e) => setForm({ ...form, evolution_api_key: e.target.value })}
-                />
+                <div className="relative">
+                  <Input
+                    type={showKey ? "text" : "password"}
+                    placeholder="chave global ou da instância"
+                    value={form.evolution_api_key ?? ""}
+                    onChange={(e) => setForm({ ...form, evolution_api_key: e.target.value })}
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowKey((v) => !v)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    aria-label={showKey ? "Ocultar" : "Mostrar"}
+                  >
+                    {showKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
               </div>
               <div className="space-y-1">
                 <Label>Nome da Instância</Label>
@@ -177,7 +212,7 @@ function Configuracoes() {
         </Card>
 
         <div className="md:col-span-2">
-          <Button type="submit">Salvar configurações</Button>
+          <Button type="submit" disabled={saving}>{saving ? "Salvando…" : "Salvar configurações"}</Button>
         </div>
       </form>
     </div>
